@@ -1,0 +1,1 @@
+jasmine-node spec --verbose --autotest
