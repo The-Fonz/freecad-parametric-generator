@@ -2,13 +2,15 @@
  * It uses Jasmine-node, and requires Python 2.7 (x64 is preferred as it's faster).
  */
 
-var spawn = require('child_process').spawn;
+var spawn        = require('child_process').spawn;
 
-var pythonPath = "C:/Python27x64/python.exe"; // Full path to 64-bit Python
+//var pythonPath = "C:/Python27x64/python.exe"; // Full path to 64-bit Python
+var pythonPath   = "C:/Program Files (x86)/FreeCAD0.13/bin/python.exe" // Full path to FreeCAD python
 // Generate path to file by getting directory and then appending the filename
-var filePath = "C:/Users/Fons/GitHub/freecad-parametric-generator/generator.py";
-var testFilePath = "C:/Users/Fons/GitHub/freecad-parametric-generator/README.md";
+var filePath     = process.cwd() + "\\generator.py";
+var testFilePath = process.cwd() + "\\README.md";
 
+var NEWLINE = '\n'; // Python uses this as newline character
 
 describe("Generator", function() {
 
@@ -32,23 +34,45 @@ describe("Generator", function() {
 	});
 
 	// Test spawning and passing an existing predefined filename
-	it("Should start if given a valid filename", function( finished ) {
+	it("Should start without errors if given a valid filename", function( finished ) {
 		child = spawn( pythonPath, [ filePath, testFilePath ] );
-		// Make the child be whatever is returned from spawn()
+		// Make the child be whatever is returned from spawn(), don't chain methods on spawn()
 		child.stdout.on('data', function( data ) {
-			// When startup was successful, generator.py sends "SPINNING"
-			expect( String(data).match(/SPINNING/) ).not.toBeNull();
-			finished();
+			console.log(String(data));
+			if ( String(data).match(/FreeCAD/) ) {
+				// Ignore FreeCAD init line
+				//console.log("ignoring line");
+			}
+			else {
+				// Test if the status from the message is 0 (which means OK)
+				expect( JSON.parse( String(data) ).status  === 0 ).toBeTruthy();
+				// Test if any errors were thrown
+				expect( child.stderr.read() ).toBeNull(); // Does this work?
+				// TODO: Do I have to remove listeners here to make the next child.stdout.on('data',...) work?
+				//child.removeAllListeners();
+				finished();
+			}
 		});
 	});
+
 	// Test metadata extraction from the file against known metadata
-	xit("Should return the right metadata", function( finished ) {
-		// Send command
-		// Listen for reply
+	it("Should return the right metadata", function( finished ) {
+		// ATTACH HANLDER BEFORE SENDING COMMAND????!?!!??????
 		child.stdout.on('data', function( data ) {
+			console.log(String(data))
 			// Test some known element of the metadata (like a partial string)
 			finished();
 		});
+		// PROBLEM: Sometimes it does receive data from child.stdout, sometimes not...???
+		var msg = {
+			type: 'command',
+			command: 'returnMetadata',
+			options: null // No options needed for this command.
+		};
+		msgJson = JSON.stringify( msg );
+		//console.log( msgJson + NEWLINE );
+		console.log( child.stdin.write( msgJson + NEWLINE ) ); // Returns true if flushed
+		// Listen for reply
 	});
 	// Test tessellation output against a known tessellation
 	xit("Should return the correct tessellation", function( finished ) {
