@@ -1,0 +1,11 @@
+{
+  "name": "parametric-rc-parts-com",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "when": "*"
+  },
+  "devDependencies": {
+    "jasmine-node": "*"
+  }
+}

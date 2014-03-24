@@ -63,6 +63,7 @@ describe("Generator", function() {
 			// Test some known element of the metadata (like a partial string)
 			finished();
 		});
+		// TODO: Attach data handler to error!!!!
 		// PROBLEM: Sometimes it does receive data from child.stdout, sometimes not...???
 		var msg = {
 			type: 'command',
