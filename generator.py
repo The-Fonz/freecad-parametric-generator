@@ -15,29 +15,52 @@
 		status: 0 | # Optional, 0=OK
 	}
 """
-# Let's define an object with message templates
-tmpl = {}
-tmpl['stat'] = {
-	'status': None # Change this to reflect the current status
-}
 
-# Utility function that sends content to stdout
-def stdoutSend( content ):
-	sys.stdout.write( content )
-	sys.stdout.flush()
+# Imports
+import sys
+import json # For JSON parsing. Use json.load( fileobj ), not .loads( str )
+import time
+import FreeCAD # Prints init info to sys.stdout, can flush to return the data
+sys.stdout.flush() # Flush FreeCAD's init info
+
+# Let's define a message object for easy handling, and to avoid deep copy issues
+class Msg:
+	# Constructor with no arguments means just initializing
+	def __init__(self, type=None, data=None):
+		self.msg = {
+			'type': type, # Change this to reflect the current type
+			'data': data
+		}
+	# Convert python object to json and send it on stdout
+	def stdoutDump(self):
+		# Write to stdout in json format
+		sys.stdout.write( json.dumps(self.msg) )
+		# .flush() is necessary, stdout is a buffered file object. Sending '\n' doesn't work.
+		sys.stdout.flush()
+
 # Returns the graphviz in exported format (as opposed to .DependencyGraph)
 def exportGraphviz():
-	stdoutSend( FreeCAD.ActiveDocument.exportGraphviz() )
+	data = FreeCAD.ActiveDocument.exportGraphviz()
+	msg = Msg('exportGraphviz', data )
+	msg.stdoutDump()
+
 # Returns the right metadata
 def getContent():
-	stdoutSend( FreeCAD.ActiveDocument.Content )
+	msg = Msg()
+	msg.msg['type'] = 'getContent'
+	msg.msg['data'] = FreeCAD.ActiveDocument.Content
+	msg.stdoutDump()
+
 # Returns tessellation
 def getTessellation( accuracy ):
 	# TODO: Fuse all objects before tessellating
 	try:
-		stdoutSend( FreeCAD.ActiveDocument.getObject("Cut").Shape.tessellate( accuracy ).__str__() )
+		data = FreeCAD.ActiveDocument.getObject("Cut").Shape.tessellate( accuracy ).__str__()
+		msg = Msg('getTessellation', data)
+		msg.stdoutDump()
 	except TypeError:
 		raise Warning("Accuracy parameter is of the wrong type")
+
 # Changes parameter
 def changeParam( objName, param, val ):
 	fcobj = FreeCAD.ActiveDocument.getObject( objName )
@@ -49,11 +72,10 @@ def changeParam( objName, param, val ):
 	if fcobj: # If object exist in current document
 		try:
 			# Builtin python function to set obj param per object name string
-			setattr( fcobj, param, val ) # The goal of this function
+			setattr( fcobj, param, val ) # The goal of this entire function
 			# If the above did not throw an error...
-			msg = tmpl['stat']
-			msg['status'] = 1 # Changed param success status
-			stdoutSend( json.dumps(msg) )
+			msg = Msg('changeParam') # Only set type, no data needed
+			msg.stdoutDump()
 		except AttributeError: # Uh oh, the object doesn't have the attribute!
 			raise Warning("Object doesn't have the sought attribute")
 	else: # Is raising a warning for this a good idea?
@@ -61,8 +83,9 @@ def changeParam( objName, param, val ):
 
 # Routes the command to the right function
 def commandRouter( lineJson ):
-	cmd = lineJson['command']
-	opt = lineJson['options']
+	cmd = lineJson['command'] # Easy access
+	opt = lineJson['options'] # Easy access
+	# Make `case`-like functionality with if/elif checks
 	if cmd == "getContent":
 		getContent()
 	elif cmd == "exportGraphviz":
@@ -75,16 +98,11 @@ def commandRouter( lineJson ):
 		param = opt['param']
 		val = opt['val']
 		changeParam( objName, param, val )
-	# Route to right function
-	# if not matched, throw error?
+	else:
+		# if not matched, throw error? 
+		pass
 
 if __name__ == "__main__":
-	import sys
-	import json # For JSON parsing. Use json.load( fileobj ), not .loads( str )
-	import time
-	import FreeCAD # Prints init info to sys.stdout, can flush to return the data
-	sys.stdout.flush()
-
 	try:
 		sys.argv[1] # First argument (sys.argv[0] is path)
 	except IndexError:
@@ -96,14 +114,12 @@ if __name__ == "__main__":
 		raise Warning("Invalid or non-existing file %s" % sys.argv[1])
 
 	# Let parent process know we're up and running
-	msg = tmpl['stat']
-	msg['status'] = 0 # Use stat msg template. Status 0 is OK
-	stdoutSend( json.dumps(msg) )
-	# .flush() is necessary, stdout is a buffered file object. Sending '\n' doesn't work.
+	Msg('init').stdoutDump() # Init message. No status needed, with this we always say 'we're running'
 
-	while 1: # An infinite loop is fine, as the parent process can kill this one
+	# Main loop. Using an infinite loop is fine, as the parent process can kill this one.
+	while 1:
 		# sys.stdin.readline() happily blocks
-		lineJson = json.loads( sys.stdin.readline() )
-		# json.loads can throw an error
+		lineJson = json.loads( sys.stdin.readline() ) # json.loads can throw an error
+
 		if lineJson['type'] == 'command':
 			commandRouter( lineJson )
