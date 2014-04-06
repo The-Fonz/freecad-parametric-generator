@@ -10,5 +10,9 @@ It takes a `.FCStd` file and manipulates part parameters, just like you'd do in 
 
 ### How it does what it does ###
 
-### How to use ###
+### Components ###
+`generator.py` is the main program that does all the heavy lifting and can be spawned as child process of some program.
 
+`generator.js` is a *Node.js* module to control a `generator.py` instance.
+
+### How to use ###

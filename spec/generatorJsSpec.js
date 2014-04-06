@@ -14,14 +14,14 @@ var testFilePath = process.cwd() + "\\spec\\example-parts\\cubering.FCStd";
 
 // Regex to remove whitespace (which can differ between similar objects)
 var REGWS = /[\s]/g; // Don't forget global flag, otherwise only first match
-// Let's add a method to the String prototype for convenience
-String.prototype.rmWs = function() {
-	// Check if it's undefined, otherwise this.replace() hangs!
-	if ( typeof this != 'undefined' )
-		// PROBABLY DOESN'T WORK PROPERLY!
-		return this.replace(REGWS, ""); // Return it!
-	else
-		return false;
+// Let's define a utility method for removing string whitespace
+function rmWs(str) {
+	// Test if string exists
+	if (typeof str !== 'undefined') {
+		return str.replace(REGWS, ""); // Return it!
+	} else {
+		// Return nothing (undefined)
+	}
 }
 
 // # Testdata
@@ -73,7 +73,7 @@ describe("Generator", function() {
 			expect( err ).toBeNull();
 			//console.log(res.rmWs());
 			//console.log(testdataGraphviz.rmWs());
-			expect( res.rmWs() ).toEqual( testdataGraphviz.rmWs() );
+			expect( rmWs(res) ).toEqual( rmWs(testdataGraphviz) );
 			finished();
 		});
 	});
@@ -85,7 +85,7 @@ describe("Generator", function() {
 		nodefn.bindCallback( p, function ( err, res ) {
 			expect(err).toBeNull();
 			// Test some known element of the metadata (like a partial string)
-			expect( res.rmWs() ).toEqual( testdataContent.rmWs() );
+			expect( rmWs(res) ).toEqual( rmWs(testdataContent) );
 			//console.log(res);
 			finished();
 		});
@@ -103,7 +103,7 @@ describe("Generator", function() {
 		});*/
 		nodefn.bindCallback( p, function ( err, res ) {
 			expect(err).toBeNull();
-			expect( res.rmWs() ).toEqual( testdataTessellation.rmWs() );
+			expect( rmWs(res) ).toEqual( rmWs(testdataTessellation) );
 			finished();
 		});
 	});
@@ -124,7 +124,7 @@ describe("Generator", function() {
 		var p = gen.getTessellation( 1.0 );
 		nodefn.bindCallback( p, function ( err, res ) {
 			expect(err).toBeNull();
-			expect( res ).toEqual( testdataTessellationHeight20 );
+			expect( rmWs(res) ).toEqual( rmWs(testdataTessellationHeight20) );
 			finished();
 		});
 	});
@@ -134,7 +134,7 @@ describe("Generator", function() {
 		var p = gen.getTessellation( 'abc235' );
 		nodefn.bindCallback( p, function ( err, res ) {
 			expect(err).toBeTruthy();
-			expect( res ).not.toEqual( testdataTessellationHeight20 );
+			expect( rmWs(res) ).not.toEqual( rmWs(testdataTessellationHeight20) );
 			finished();
 		});
 	});

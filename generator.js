@@ -5,6 +5,9 @@
 var spawn = require('child_process').spawn;
 var when  = require('when'); // Promises
 
+// Promise timeout constant
+// ------------------------
+var PROMISE_TIMEOUT = 60000; // ms
 
 // Class constructor
 // -----------------
@@ -23,14 +26,51 @@ Generator = function ( pythonPath, pyGenPath ) {
 // Utility functions
 // -----------------
 
-// ## Easily make defers with type
-Generator.prototype._defer = function( type ) {
+// ## Easily handle making promises,
+//    adding them to queue and sending command
+Generator.prototype._defer = function( type, options ) {
 	console.log("_defer called, type:"+type+"\n");
 	var d = when.defer();
-	// Set type (string)
+	// Set type (string) and options
 	d.type = type;
-	// Remember defer object!
-	self._defs.push( d );
+	d.options = options;
+	
+	// Attach sending handler to defer obj
+	d.send = function() {
+		console.log( 'Command "'+this.type+'" sent\n');
+		self._inCmd( this.type, this.options );
+	}
+
+	// If no promises are waiting...
+	if ( self._defs.length === 0 ) {
+		// Send command
+		d.send();
+		// Notify listeners (depends on handler's implementation if this is used)
+		d.notify('sent');
+	}
+
+	// Remember defer object by adding it to beginning of queue
+	self._defs.unshift( d );
+
+	// Make promise 'expire'
+	setTimeout( function( d ) {
+		var msg = "Promise timed out after "+PROMISE_TIMEOUT+"ms\n";
+		console.log(msg);
+		// Is only sent when not yet resolved/rejected
+		d.reject(new Error( msg ));
+		// Set a marker
+		d.expired = true;
+		// Now remove it from queue by looking for this marker
+		// (only successful if it's still in queue of course)
+		for (var i=0; i< self._defs.length; i++) {
+			var d = self._defs[i];
+			// Check for expired marker
+			if ( d.expired ) {
+				self._defs.remove( i ); // Custom array remove method.
+			}
+		}
+	}, PROMISE_TIMEOUT, d ); // Note passing of argument
+
 	return d;
 }
 // ## Array Remove - By John Resig (MIT Licensed)
@@ -63,7 +103,7 @@ Generator.prototype._inCmd = function( command, options ) {
 // Initialization function
 // -----------------------
 
-// ## Loads cad file and spawns generator
+// ## Loads cad file, spawns generator, attaches handlers to stderr and stdout
 Generator.prototype.init = function ( filePath ) {
 	// Error callback
 	function errCb ( err ) {
@@ -81,7 +121,7 @@ Generator.prototype.init = function ( filePath ) {
 		console.log("dataCb called, first 40 chars:\n"+data.slice(0,40)+"\n");
 		// Parse data from string to json
 		var jd = JSON.parse( data );
-		console.log("Parsed\n");
+		console.log("Parsed JSON\n");
 		// Go over all remembered promises
 		for (var i=0; i< self._defs.length; i++) {
 			var d = self._defs[i]; // Easy access
@@ -90,14 +130,17 @@ Generator.prototype.init = function ( filePath ) {
 				console.log("Type '"+d.type+"' matched\n");
 				console.log("Resolving defer\n");
 				d.resolve( jd.data );
-				self._defs.remove( i ); // Custom remove method.
+				self._defs.remove( i ); // Custom array remove method.
 			}
 		}
-		// Idea: to avoid message pileup, send next message here? (LIFO?)
-		// Timeouts could be set on the promises, so if it takes really long,
-		// promises will simply expire and not pile up.
+		// To avoid message pileup, send next message here, LIFO style.
+		// A timeout is already set on defers when making them using self._defer()
 		// (Theoretically, 1000's of tessellations could be requested,
 		//  keeping generator.py occupied for hours.)
+		if ( self._defs.length > 0 ) {
+			var d = self._defs[0]; // LIFO style if unshift() is used when remembering promise
+			d.send(); // Call .send() method attached by self._defer()
+		}
 	}
 
 	// ### Instantiate generator process. [ pythonPath generator.py somecadfile.xx ]
@@ -140,31 +183,27 @@ Generator.prototype.init = function ( filePath ) {
 // ## Return FreeCAD.ActiveDocument.exportGraphviz()
 Generator.prototype.exportGraphviz = function (  ) {
 	var d = self._defer('exportGraphviz'); // Make defer obj with type
-	// Send command
-	self._inCmd( 'exportGraphviz' );
+
 	// Return promise
 	return d.promise;
 }
 // ## Return FreeCAD.ActiveDocument.Content
 Generator.prototype.getContent = function (  ) {
 	var d = self._defer('getContent');
-	self._inCmd( 'getContent' );
+
 	return d.promise;
 }
 // ## Return tessellation of entire object
 // Quite hard, because some joins might have to be performed
 // Look at the FreeCAD example on the FreeCAD website!
 Generator.prototype.getTessellation = function ( accuracy ) {
-	var d = self._defer('getTessellation');
-
-	self._inCmd( 'getTessellation', {accuracy: accuracy} );
+	var d = self._defer('getTessellation', {accuracy: accuracy} );
 
 	return d.promise;
 }
 // ## Change parameter
 Generator.prototype.changeParam = function( objName, param, val ) {
-	var d = self._defer( 'changeParam' );
-	self._inCmd( 'changeParam', { // Command type, options
+	var d = self._defer( 'changeParam', { // Command type, options
 		objName: objName,
 		param: param,
 		val: val
