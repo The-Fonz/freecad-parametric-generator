@@ -1,6 +1,6 @@
-"""
-This file contains all utility functions.
-"""
+#
+# This file contains all utility functions.
+#
 
 import zipfile
 import xml.etree.ElementTree as ET

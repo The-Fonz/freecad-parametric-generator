@@ -1,14 +1,15 @@
-"""
-From https://github.com/dcowden/cadquery/blob/master/cadquery/freecad_impl/exporters.py
-    Objects that represent
-    three.js JSON object notation
-
-    https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3
-
-    Get a json model from this model.
-    For now we'll forget about colors, vertex normals, and all that stuff
-"""
+#
+# Adapted from https://github.com/dcowden/cadquery/blob/master/cadquery/freecad_impl/exporters.py
+#     Objects that represent
+#     three.js JSON object notation
+#     https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3
+#
 def tessToJson( vert, face, nvert, nface):
+    '''Specify compatible lists of vertices and faces,
+    and get a three.js JSON object back. Note: list of face indices
+    must be compatible, i.e. lead with 0 for each row of 3 indices
+    to create a triangle. Spec:
+    https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3'''
     return JSON_TEMPLATE % {
         'vertices' : str(vert),
         'faces' : str(face),
