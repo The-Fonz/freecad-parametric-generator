@@ -16,3 +16,4 @@ It takes a `.FCStd` file and manipulates part parameters, just like you'd do in 
 `generator.js` is a *Node.js* module to control a `generator.py` instance.
 
 ### How to use ###
+The spec and Node implementation require some Node packages. So first run `npm install`.

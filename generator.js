@@ -54,8 +54,9 @@ Generator.prototype._defer = function( type, options ) {
 
 	// Make promise 'expire'
 	setTimeout( function( d ) {
-		var msg = "Promise timed out after "+PROMISE_TIMEOUT+"ms\n";
-		console.log(msg);
+		// Message for testing
+		//var msg = "Promise timed out after "+PROMISE_TIMEOUT+"ms\n";
+		//console.log(msg);
 		// Is only sent when not yet resolved/rejected
 		d.reject(new Error( msg ));
 		// Set a marker
@@ -118,7 +119,7 @@ Generator.prototype.init = function ( filePath ) {
 	}
 	// Data callback
 	function dataCb ( data ) {
-		console.log("dataCb called, first 40 chars:\n"+data.slice(0,40)+"\n");
+		console.log("dataCb called, first 80 chars:\n"+data.slice(0,80)+"\n");
 		// Parse data from string to json
 		var jd = JSON.parse( data );
 		console.log("Parsed JSON\n");
@@ -161,7 +162,7 @@ Generator.prototype.init = function ( filePath ) {
 			var last  = data.lastIndexOf('}');
 			if ( (first !== -1) && (last !== -1) ) {
 				var s = data.slice( first, last+1 ); // Include last character
-				console.log("JSON extracted:\n"+s+"\n");
+				console.log("JSON extracted, first 80 chars:\n"+s.slice(0,80)+"\n");
 				dataCb( s );
 			}
 		}
