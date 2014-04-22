@@ -1,0 +1,1 @@
+jasmine-node --verbose --autotest spec/managerSpec.js

@@ -6,7 +6,7 @@
 var Generator = require('../generator').Generator;
 var nodefn = require('when/node/function');
 
-var pythonPath   = "C:/Program Files (x86)/FreeCAD0.13/bin/python.exe" // Full path to FreeCAD python
+var pythonPath   = "C:/Program Files (x86)/FreeCAD0.13/bin/python.exe"; // Full path to FreeCAD python
 // Generate path to file by getting directory and then appending the filename
 var pyGenPath    = process.cwd() + "\\generator.py";
 var testFilePath = process.cwd() + "\\spec\\example-parts\\cubering.FCStd";
