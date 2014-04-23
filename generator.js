@@ -174,26 +174,43 @@ Generator.prototype.init = function ( filePath ) {
 		errCb( err );
 	});
 
+	var buff = "";
+
 	// ### Attach one global stdout listener
-	self.gen.stdout.on('data', function (data) {
-		// If data starts with '{' it's probably a JSON object
-		if ( data.match(/^{/) ) {
-			dataCb( data );
-		} else { // If first line ain't JSON...
-			// Try to extract JSON
-			var first = data.indexOf('{'); // Returns -1 if not found
-			// There's a problem here!
-			//var last  = data.lastIndexOf('}');
-			var last = data.length - 1;
-			
-			if ( (first !== -1) && (last !== -1) ) {
-				var s = data.slice( first, last+1 ); // Include last character
-				console.log("Length of data: " + data.length);
-				console.log("JSON extracted, first 80 chars:\n"+s.slice(0,80)+"\n");
-				//console.log("Original data: "+data);
-				dataCb( s );
+	self.gen.stdout.on('data', function ( data ) {
+
+		buff += data;
+
+		// Quick hack!
+		//data = buff;
+
+		if ( data.match(/\}$/) ) {
+
+			console.log("Ends with '}', processing data\n");
+
+			if ( data.match(/^{/) ) {
+				dataCb( buff );
+			} else { // If first line ain't JSON...
+				// Try to extract JSON
+				var first = buff.indexOf('{'); // Returns -1 if not found
+				// There's a problem here!
+				var last  = buff.lastIndexOf('}');
+				console.log("Last indexOf: " + last)
+				//var last = data.length - 1;
+				
+				if ( (first !== -1) && (last !== -1) ) {
+					var s = buff.slice( first, last+1 ); // Include last character
+					console.log("Length of buff: " + buff.length);
+					//console.log(somedata);
+					console.log("JSON extracted, first 80 chars:\n"+s.slice(0,80)+"\n");
+					//console.log("Original data: "+data);
+					dataCb( s );
+				}
 			}
+		} else {
+			console.log("Not processing data, doesn't end with '}'");
 		}
+
 	});
 
 	// Set encodings to not have to cast using String() each time

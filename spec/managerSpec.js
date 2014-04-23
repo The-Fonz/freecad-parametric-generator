@@ -6,7 +6,7 @@
 var nodefn = require('when/node/function');
 
 // Define constants
-var testFile = "torus.FCStd"
+var testFile = "cubering.FCStd"
 
 // Manager object
 var Manager = require('../manager').Manager;

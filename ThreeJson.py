@@ -14,7 +14,8 @@ def tessToJson( vert, face, nvert, nface):
         'vertices' : str(vert),
         'faces' : str(face),
         'nVertices': nvert,
-        'nFaces' : nface
+        'nFaces' : nface,
+        'dummydata': "a"*1000
     };
 
 JSON_TEMPLATE= """\
@@ -57,6 +58,8 @@ JSON_TEMPLATE= """\
 
     "uvs": [[]],
 
-    "faces": %(faces)s
+    "faces": %(faces)s,
+
+    "dummydata": "%(dummydata)s"
 }
 """

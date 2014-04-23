@@ -92,6 +92,7 @@ def getTessellation( tolerance ):
 	msg = Msg()
 	msg.msg['type'] = 'getTessellation'
 	msg.msg['data'] = ThreeJson.tessToJson( vertices, faces, nVertices, nFaces )
+
 	msg.stdoutDump()
 
 
