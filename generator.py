@@ -5,14 +5,10 @@
 	## Incoming message (command) ##
 	{
 		type: command, # command is the only type for now
-		command: returnMetadata | returnTessellation
+		command: returnTessellation
 		options: {
 			tolerance: .1 # Required if command === returnTessellation
 		}
-	}
-	## Outgoing message (reply) ##
-	{
-		status: 0 | # Optional, 0=OK
 	}
 """
 

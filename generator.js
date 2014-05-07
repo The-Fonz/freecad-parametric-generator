@@ -1,29 +1,22 @@
 /*
- * This is the Node class to handle generator.py processes.
+ * This is a thin and 'dumb' wrapper to communicate with `generator.py` processes.
+ * It doesn't do much more than send commands to `generator.py` and pipe the output
+ * back to the recipient. Its smartest feature is how it detects end of transmission:
+ * it listens for '!ENDSTREAM!' strings on stderr (a new way like this is needed
+ * as stdout is piped through without listening).
  */
 
 var spawn = require('child_process').spawn;
-var when  = require('when'); // Promises
 
-// Promise timeout constant
-// ------------------------
-var PROMISE_TIMEOUT = 60000; // ms
 
 // Class constructor
 // -----------------
-
-Generator = function ( pythonPath, pyGenPath, timeout ) {
+Generator = function ( pythonPath, pyGenPath ) {
 	self = this;
 	// Define all class variables
 	self.pythonPath = pythonPath;
 	self.pyGenPath  = pyGenPath;
 	self.gen = null;
-
-	// If no timeout given, use standard
-	if (timeout) {
-		// Quick hack alarm! Is nicer if it's not global
-		PROMISE_TIMEOUT = timeout;
-	}
 }
 
 
@@ -31,7 +24,7 @@ Generator = function ( pythonPath, pyGenPath, timeout ) {
 // -----------------
 
 // ## Internal utility method to construct and send msgs on stdin
-Generator.prototype._inCmd = function( command, options ) {
+Generator.prototype._sendCmd = function( command, options ) {
 
 	var NEWLINE = '\n'; // Python uses this as newline character
 
@@ -45,6 +38,16 @@ Generator.prototype._inCmd = function( command, options ) {
 };
 
 
+// ## Pipe generator.py output to recipient
+Generator.prototype._pipe = function ( destinationStream ) {
+	// Remember recipient
+	self.recipient = destinationStream;
+
+	// Pipe stdout of generator.py to the destination Writable Stream
+	self.gen.stdout.pipe( destinationStream );
+}
+
+
 // Initialization function
 // -----------------------
 
@@ -53,6 +56,12 @@ Generator.prototype.init = function ( filePath ) {
 
 	// ### Instantiate generator process. [ pythonPath generator.py somecadfile.xx ]
 	self.gen = spawn( self.pythonPath, [ self.pyGenPath, filePath ] );
+
+	// ### Set encodings to not have to cast using String() each time
+	var enc = 'utf8';
+	self.gen.stderr.setEncoding( enc );
+	self.gen.stdout.setEncoding( enc );
+	self.gen.stdin.setEncoding( enc );
 
 	// ### Remember the current recipient of generator.py stdout
 	self.recipient = null;
@@ -66,32 +75,34 @@ Generator.prototype.init = function ( filePath ) {
 
 			if (self.recipient !== null) {
 
+				// Unpipe?
+
+				// End stream
 				self.recipient.end();
 
+				// Clear recipient
 				self.recipient = null;
 			} else {
 				// Weird! Recipient doesn't exist.
-				throw Error("Recipient doesn't exist!")
+				throw Error("Recipient doesn't exist!");
 			}
 
 		} else {
-			console.error("Python Error:\n" + err);
+			// Send status code and end recipient?
+			// No, I want to implement the Writable Stream interface,
+			// no specific HTTP request stuff
+			self.recipient.end();
 
-			// End recipient or someting...
+			throw Error("Python Error:\n" + err);
+			//console.error("Python Error:\n" + err);
+
 		}
 	});
 
-	// Set encodings to not have to cast using String() each time
-	var enc = 'utf8';
-	self.gen.stderr.setEncoding( enc );
-	self.gen.stdout.setEncoding( enc );
-	self.gen.stdin.setEncoding( enc );
-}
 
-// Pipe generator.py output to recipient
-Generator.prototype.pipe = function ( dest ) {
-	self.recipient = dest;
-	self.gen.stdout.pipe( dest );
+	/* ## We're not attaching to stdout here, as that's done by piping the response
+	 *    object through when receiving a command
+	 */
 }
 
 
@@ -103,7 +114,7 @@ Generator.prototype.getGraphviz = function ( dest ) {
 	self._inCmd('getGraphviz'); // Make defer obj with type
 
 	// Pipe stdout
-	self.pipe( dest );
+	self._pipe( dest );
 }
 
 // ## Return FreeCAD.ActiveDocument.Content
@@ -111,7 +122,7 @@ Generator.prototype.getContent = function ( dest ) {
 	self._inCmd('getContent');
 
 	// Pipe stdout
-	self.pipe( dest );
+	self._pipe( dest );
 }
 
 
@@ -120,7 +131,7 @@ Generator.prototype.getTessellation = function ( dest, accuracy ) {
 	self._inCmd('getTessellation', {accuracy: accuracy} );
 
 	// Pipe stdout
-	self.pipe(dest);
+	self._pipe(dest);
 }
 
 
@@ -131,6 +142,8 @@ Generator.prototype.changeParam = function( objName, param, val ) {
 		param: param,
 		val: val
 	} );
+
+	// Don't pipe stdout, changeParam has no response
 }
 
 // ## Kill process

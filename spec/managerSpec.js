@@ -16,21 +16,21 @@ var manager = new Manager();
 
 describe('Manager', function() {
 
-	it("Should return the correct tessellation", function(finished) {
+	it("Print generator.py output for the hell of it", function(finished) {
 
-		var paramArr = []//[[],[],[]];
+		// Make a dummy request object (Readable Stream)
 
-		var accuracy = .1; // mm?
+		// Make a dummy response Writable Stream
+		// Or just use this file's stdout to pipe to...
 
-		var p = manager.changeAndTess( testFile, paramArr, accuracy );
+		// Make a filename
 
-		nodefn.bindCallback( p, function ( err, res ) {
-			console.log(err);
-			//console.log(res);
-			expect(err).toBeNull();
-			//expect( res ).toEqual( testtess );
-			finished();
-		});
+		// Make a command block
+
+		// Send command block and response
+	});
+
+	xit("Should return the correct tessellation", function(finished) {
 
 	});
 });
