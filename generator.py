@@ -23,7 +23,6 @@ import time
 import FreeCAD # Prints init info to sys.stdout, can flush to return the data
 sys.stdout.flush() # Flush FreeCAD's init info
 # Custom files
-from Msg import Msg
 import Routes
 
 # Routes the command to the right function
@@ -33,8 +32,8 @@ def commandRouter( lineJson ):
 	# Make `case`-like functionality with if/elif checks
 	if cmd == "getContent":
 		Routes.getContent()
-	elif cmd == "exportGraphviz":
-		Routes.exportGraphviz()
+	elif cmd == "getGraphviz":
+		Routes.getGraphviz()
 	elif cmd == "getTessellation":
 		acc = opt['accuracy'] # Throws KeyError
 		Routes.getTessellation( acc )
@@ -55,11 +54,11 @@ if __name__ == "__main__":
 
 	try:
 		DOCUMENT = FreeCAD.openDocument ( sys.argv[1] ) # Throws I/O Error
+		# Flag to signal that no more shit will be printed on stdout
+		sys.stdout.write("!BEGIN!")
+		sys.stdout.flush() # Flush FreeCAD's load info
 	except IOError:
 		raise Warning("Invalid or non-existing file %s" % sys.argv[1])
-
-	# Let parent process know we're up and running
-	Msg('init').stdoutDump() # Init message. No status needed, with this we always say 'we're running'
 
 	# Main loop. Using an infinite loop is fine, as the parent process can kill this one.
 	while 1:

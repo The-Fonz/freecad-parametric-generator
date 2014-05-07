@@ -5,21 +5,26 @@
 # Dependencies
 import utils
 import ThreeJson
-from Msg import Msg
 import FreeCAD
 
-def exportGraphviz():
+# Message to write on stderr that signals end of message
+ENDSTREAM = "!ENDSTREAM!"
+
+def output( data ):
+	sys.stdout.write( data )
+	sys.stdout.flush()
+	sys.stderr.write(ENDSTREAM)
+	sys.stderr.flush()
+
+def getGraphviz():
 	'''Returns the graphviz in exported format (as opposed to .DependencyGraph).'''
 	data = FreeCAD.ActiveDocument.exportGraphviz()
-	msg = Msg('exportGraphviz', data )
-	msg.stdoutDump()
+	output(data)
 
 def getContent():
 	'''Returns the right metadata.'''
-	msg = Msg()
-	msg.msg['type'] = 'getContent'
-	msg.msg['data'] = FreeCAD.ActiveDocument.Content
-	msg.stdoutDump()
+	data = FreeCAD.ActiveDocument.Content
+	output(data)
 
 def getTessellation( tolerance ):
 	'''Returns tessellation with specified tolerance.'''
@@ -89,11 +94,8 @@ def getTessellation( tolerance ):
 			else:
 				raise Warning("This face is no triangle, it has length %s" % len(face) )
 	
-	msg = Msg()
-	msg.msg['type'] = 'getTessellation'
-	msg.msg['data'] = ThreeJson.tessToJson( vertices, faces, nVertices, nFaces )
-
-	msg.stdoutDump()
+	data = ThreeJson.tessToJson( vertices, faces, nVertices, nFaces )
+	output(data)
 
 
 def changeParam( objName, param, val ):
@@ -108,9 +110,6 @@ def changeParam( objName, param, val ):
 		try:
 			# Builtin python function to set obj param per object name string
 			setattr( fcobj, param, val ) # The goal of this entire function
-			# If the above did not throw an error...
-			msg = Msg('changeParam') # Only set type, no data needed
-			msg.stdoutDump()
 		except AttributeError: # Uh oh, the object doesn't have the attribute!
 			raise Warning("Object doesn't have the sought attribute")
 	else: # Is raising a warning for this a good idea?

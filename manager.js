@@ -114,22 +114,12 @@ Manager.prototype._findGenByFileName = function ( filename ) {
 Manager.prototype._changeParams = function ( genObj, arr ) {
 	// `arr` contains all arguments in this form: [ [ obj, param, value ], [ obj, param, value ], ... ]
 
-	var promiseArray = [];
-
 	// Note: This should be done in generator.js later on.
-
 	// Iterate over all items in array
 	for ( var i=0; i<arr.length; i++ ) {
-		var a = arr[i];
 		// changeParam( objName, param, val )
-		var p = genObj.changeParam( a[0], a[1], a[2] );
-
-		promiseArray.push( p );
+		genObj.changeParam( a[0], a[1], a[2] );
 	}
-
-	// Return promise that is resolved when all promises in promiseArray are resolved
-	return when.all( promiseArray );
-
 }
 
 // This is the function that should principally be used from the outside
@@ -154,25 +144,9 @@ Manager.prototype.changeAndTess = function ( filename, arr, accuracy ) {
 	// Warning: ALL PARAMETERS HAVE TO BE CHANGED!
 	// Otherwise there's the danger of inconsistency
 
-	var promiseChange = this._changeParams( genObj, arr );
+	this._changeParams( genObj, arr );
 
-	// Alias this
-	var self = this;
-	// Return the transformed promise. The recipient will directly receive the tessellation.
-	// When properly used, promises are awesome!
-	return promiseChange.then( function( changeParamsResult ) {
-
-		// Returns promise...
-		return genObj.getTessellation( accuracy );
-
-	});
-
-	// Note: Generator.js works with a LIFO system and doesn't discriminate between users and
-	//       tasks. This will give problems when, for example, a tessellation is asked for
-	//       before all parameters are changed. And a few other cases.
-	//       Maybe it's better to change parameters and tessellate in a 'block' or something,
-	//       and give those blocks not LIFO precedence but FIFO, and delete old request 'blocks'.
-	//       (With few users this won't give big problems, but with many users it will.)
+	genObj.getTessellation( accuracy );
 
 }
 
