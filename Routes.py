@@ -8,12 +8,12 @@ import ThreeJson
 import FreeCAD
 
 # Message to write on stderr that signals end of message
-ENDSTREAM = "!ENDSTREAM!"
+ENDSTREAMFLAG = "!ENDSTREAM!"
 
 def output( data ):
 	sys.stdout.write( data )
 	sys.stdout.flush()
-	sys.stderr.write(ENDSTREAM)
+	sys.stderr.write( ENDSTREAMFLAG )
 	sys.stderr.flush()
 
 def getGraphviz():
@@ -100,17 +100,25 @@ def getTessellation( tolerance ):
 
 def changeParam( objName, param, val ):
 	'''Changes parameter of object with specified name.'''
+
 	fcobj = FreeCAD.ActiveDocument.getObject( objName )
+
 	try: # Test if val is a number
 		val = float(val)
+
 	except ValueError:
 		# Is it wise to raise so many warnings?
 		raise Warning("Can't cast value to float")
+
+
 	if fcobj: # If object exist in current document
+
 		try:
 			# Builtin python function to set obj param per object name string
 			setattr( fcobj, param, val ) # The goal of this entire function
+
 		except AttributeError: # Uh oh, the object doesn't have the attribute!
 			raise Warning("Object doesn't have the sought attribute")
+
 	else: # Is raising a warning for this a good idea?
 		raise Warning("Object doesn't exist in current document")

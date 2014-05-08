@@ -8,6 +8,7 @@
 
 var spawn = require('child_process').spawn;
 
+var NEWLINE = require('os').EOL;
 
 // Class constructor
 // -----------------
@@ -26,14 +27,14 @@ Generator = function ( pythonPath, pyGenPath ) {
 // ## Internal utility method to construct and send msgs on stdin
 Generator.prototype._sendCmd = function( command, options ) {
 
-	var NEWLINE = '\n'; // Python uses this as newline character
-
 	var msg = JSON.stringify({
 		type: 'command',
 		command: command, // Accept any 'options' value
 		options: typeof options !== 'undefined' ? options : null // No options needed for this command.
 	});
 
+	console.log("COMMAND SENT: " + msg);
+	
 	return self.gen.stdin.write( msg + NEWLINE );
 };
 
@@ -52,7 +53,8 @@ Generator.prototype._pipe = function ( destinationStream ) {
 // -----------------------
 
 // ## Loads cad file, spawns generator, attaches handlers to stderr and stdout
-Generator.prototype.init = function ( filePath ) {
+// The callback is notified on successful startup.
+Generator.prototype.init = function ( filePath, startupCallBack ) {
 
 	// ### Instantiate generator process. [ pythonPath generator.py somecadfile.xx ]
 	self.gen = spawn( self.pythonPath, [ self.pyGenPath, filePath ] );
@@ -66,14 +68,15 @@ Generator.prototype.init = function ( filePath ) {
 	// ### Remember the current recipient of generator.py stdout
 	self.recipient = null;
 
-	// ### Attach one global stderr listener
+	// ### Attach one global stderr listener. Stderr functions as message passing so
+	// stdout can be used just for piping.
 	self.gen.stderr.on('data', function (err) {
 
 		// If it contains "!ENDSTREAM!" it actually means that the data has ended,
 		// and we can close the receiving stream.
 		if ( err.match(/!ENDSTREAM!/g) ) {
 
-			if (self.recipient !== null) {
+			if (self.recipient) {
 
 				// Unpipe?
 
@@ -84,17 +87,48 @@ Generator.prototype.init = function ( filePath ) {
 				self.recipient = null;
 			} else {
 				// Weird! Recipient doesn't exist.
-				throw Error("Recipient doesn't exist!");
+				//throw Error("Recipient doesn't exist!");
+				console.error( "Recipient doesn't exist!" );
+			}
+
+		} else if ( err.match( /!BEGIN!/g ) ) {
+			// Generator.py sends '!BEGIN!' on stderr when successfully initialized
+
+			// Now flush stdout to remove init data
+			var o = self.gen.stdout.read();
+			console.log("\n\n" +
+				"############################## Flushing stdout: ################################\n"
+				+ o );
+
+			// Notify the callback that wants to know if we successfully started
+			if (startupCallBack) {
+				err = null;
+				startupCallBack( err );
+				// Now it won't ever have to be called again
+				startupCallBack = null;
 			}
 
 		} else {
+			// If it's still listening, notify of error
+			if (startupCallBack) {
+				startupCallBack(err);
+			}
+
+			// TODO: Shut down someway? And let the manager know?
+
 			// Send status code and end recipient?
 			// No, I want to implement the Writable Stream interface,
 			// no specific HTTP request stuff
-			self.recipient.end();
+			if (self.recipient) {
+				self.recipient.end();
+			}
 
-			throw Error("Python Error:\n" + err);
-			//console.error("Python Error:\n" + err);
+			// Can't do this, or jasmine will stall
+			//throw Error("Python Error:\n" + err);
+			// Print instead
+			console.error("\n\n" +
+				"################################ Python Error:  ################################\n"
+				+ err);
 
 		}
 	});
@@ -111,7 +145,7 @@ Generator.prototype.init = function ( filePath ) {
 
 // ## Return FreeCAD.ActiveDocument.exportGraphviz()
 Generator.prototype.getGraphviz = function ( dest ) {
-	self._inCmd('getGraphviz'); // Make defer obj with type
+	self._sendCmd('getGraphviz');
 
 	// Pipe stdout
 	self._pipe( dest );
@@ -119,7 +153,7 @@ Generator.prototype.getGraphviz = function ( dest ) {
 
 // ## Return FreeCAD.ActiveDocument.Content
 Generator.prototype.getContent = function ( dest ) {
-	self._inCmd('getContent');
+	self._sendCmd('getContent');
 
 	// Pipe stdout
 	self._pipe( dest );
@@ -128,7 +162,7 @@ Generator.prototype.getContent = function ( dest ) {
 
 // ## Return tessellation of entire object
 Generator.prototype.getTessellation = function ( dest, accuracy ) {
-	self._inCmd('getTessellation', {accuracy: accuracy} );
+	self._sendCmd('getTessellation', {accuracy: accuracy} );
 
 	// Pipe stdout
 	self._pipe(dest);
@@ -137,7 +171,7 @@ Generator.prototype.getTessellation = function ( dest, accuracy ) {
 
 // ## Change parameter
 Generator.prototype.changeParam = function( objName, param, val ) {
-	self._inCmd( 'changeParam', { // Command type, options
+	self._sendCmd( 'changeParam', { // Command type, options
 		objName: objName,
 		param: param,
 		val: val

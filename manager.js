@@ -4,29 +4,40 @@
  * 
  */
 
-// # Constants
+// Constants
+// =========
+
 // Maximum number of generators active at any one time
 var MAX_N_GENERATORS = 5;
 
-// # Requires
+
+// Requires
+// ========
 
 // Require generator class
 var Generator = require('./generator').Generator;
 
+// Path module
+var path = require('path');
 
-// # Paths
+
+// Paths
+// =====
 
 // Full path to FreeCAD python
-var FCPYTHONPATH   = "C:/Program Files (x86)/FreeCAD0.13/bin/python.exe";
-// Generate path to file by getting directory and then appending the filename
-var PYGENPATH    = process.cwd() + "\\generator.py";
+var FCPYTHONPATH   = path.normalize( "C:/Program Files (x86)/FreeCAD0.13/bin/python.exe" );
+
+//var PYGENPATH    = process.cwd() + "\\generator.py";
+// `path.resolve(to)` returns the absolute path to `to`.
+var PYGENPATH    = path.resolve( "/generator.py" );
 
 // Path to `.FCStd` models
-var CADPATH = process.cwd() + "\\spec\\example-parts\\";
+//var CADPATH = process.cwd() + "\\spec\\example-parts\\";
+var CADPATH = path.resolve( "/spec/example-parts/" );
 
 
 // Constructor
-// -----------
+// ===========
 function Manager () {
 
 	// TODO: Take pythonpath, pygenpath, and cadPath as parameters
@@ -39,7 +50,7 @@ function Manager () {
 
 
 // Utility functions
-// -----------------
+// =================
 
 // ## Array Remove - By John Resig (MIT Licensed)
 Array.prototype.remove = function(from, to) {
@@ -56,7 +67,8 @@ Manager.prototype._timestamp = function () {
 
 // ## Generate file path from filename
 Manager.prototype._constructFilePath = function ( filename ) {
-	return CADPATH + filename;
+	// Using the robust path module methods for this
+	return path.join( CADPATH, filename );
 }
 
 
@@ -78,7 +90,7 @@ Manager.prototype._killExcessGen = function ( n ) {
 
 
 // CLass methods
-// -------------
+// =============
 
 // Create new instance of generator.js
 Manager.prototype._instantiateGen = function ( filename ) {
@@ -101,7 +113,7 @@ Manager.prototype._instantiateGen = function ( filename ) {
 
 	// And give it a timestamp
 	// Note: this is not used for now. And there's better ways of setting timeouts.
-	gen.startTime = this._timestamp();
+	gen.timestamp = this._timestamp();
 
 	// Add to list
 	this.genList.push( gen );
@@ -128,6 +140,24 @@ Manager.prototype._findGenByFileName = function ( filename ) {
 		}
 	}
 	// If not found, returns `undefined`
+}
+
+// ## Retrieves next command from queue and sends it
+Manager.prototype._sendNextCmd = function () {
+
+	console.log("Manager._sendNextCmd called");
+
+	// First get oldest queueObj in queue
+	var qo = genObj.cmdQueue.shift();
+
+	// If there is anything in queue...
+	if (qo) {
+		console.log("Sending new command block from queue");
+		// Send it
+		this._sendCmdBlock( qo.res, qo.cmdBlock );
+	} else {
+		console.log("No commands in queue");
+	}
 }
 
 // ## Sends command block to generator.js
@@ -161,8 +191,6 @@ Manager.prototype.cmdBlock = function ( req, res, filename, cmdBlock ) {
 	}
 
 
-	// ### Put command in queue (send later)
-
 	var timestamp = this._timestamp();
 
 	// ### Put res and cmdBlock into one object to be able to put it into queue
@@ -181,70 +209,54 @@ Manager.prototype.cmdBlock = function ( req, res, filename, cmdBlock ) {
 
 		console.log("Request emitted 'close'");
 
-		// Delete command block. As the position of queueObj's constantly change,
-		// we need an identifier to identify the block. That's what we use the
-		// timestamp for. (Potentially other commands with same timestamp can be
-		// deleted accidentally, but the chance of equal timestamps is very small)
+		/* Delete command block. As the position of queueObj's constantly change,
+		   we need an identifier to identify the block. That's what we use the
+		   timestamp for. (Potentially other commands with same timestamp can be
+		   deleted accidentally, but the chance of equal timestamps is very small) */
 		for (var i=0; i<genObj.cmdQueue.length; i++) {
 
 			// Search for timestamp
 			if ( genObj.cmdQueue.timestamp === timestamp ) {
 
-				console.log("Deleted command block with timestamp " + timestamp);
-
 				// Delete command block from queue
 				genObj.cmdQueue.remove( i );
+
+				console.log("Deleted command block with timestamp " + timestamp);
 			}
 		}
 	});
 
-	// Also include a timeout here. If there *are* many requests and they don't
-	// close, we must avoid flooding the generator. (Or is there already a built-in
-	// timeout on requests?)
+	/* Also include a timeout here. If there *are* many requests and they don't
+	   close, we must avoid flooding the generator. (Or is there already a built-in
+	   timeout on requests?) */
 
 
 
-	// ### Attach event handlers to handle sending next command later on
-
-	// Sends next command in queue
-	function sendNextCmd() {
-
-		console.log("sendNextCmd called");
-
-		// First get oldest queueObj in queue
-		var qo = genObj.cmdQueue.shift();
-
-		// If there is anything in queue...
-		if (qo) {
-			console.log("Sending new command block from queue");
-			// Send it
-			this._sendCmdBlock( qo.res, qo.cmdBlock );
-		} else {
-			console.log("No commands in queue");
-		}
-	}
-
-	// ### Connect to all possible events on the response object to handle next actions
+	// ### Connect to all possible events on the response object to handle sending next command later on
 
 	// Listen for 'close' and 'finish' (and 'unpipe'? and 'error'?) on response object. Then send next block
 	res.on('finish', function () {
 
 		// All is fine, res.end() was called. Send next command
-		sendNextCmd();
+		this._sendNextCmd();
 
-	}).on('close', function () {
+	// Bind anonymous function to be able to access Manager.this
+	}.bind(this) ).on('close', function () {
 
 		// The underlying connection was terminated before calling res.end()
 		// http://nodejs.org/api/http.html#http_event_close_1
-		console.error("Manager.js: The underlying connection was terminated before calling res.end()");
+		console.error("Response emitted 'close': the underlying 
+			connection was terminated before calling res.end()");
 
-		sendNextCmd();
-	});
+		this._sendNextCmd().bind(this);
+
+	// Bind anonymous function to be able to access Manager.this
+	}.bind(this) );
 
 
 	// ### If there are no commands in queue, send current command
 	if ( ! genObj.cmdQueue.length ) {
-		sendNextCmd();
+		this._sendNextCmd();
 	}
 
 }
