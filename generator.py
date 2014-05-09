@@ -22,6 +22,7 @@
 
 
 # Imports
+# =======
 import sys
 
 # For JSON parsing. Use `json.load( fileobj )`, not `.loads( str )`
@@ -34,7 +35,9 @@ import FreeCAD
 # Flush FreeCAD's init info
 sys.stdout.flush()
 
-# Custom files
+
+# Custom module import
+# ====================
 import Routes
 
 
@@ -42,8 +45,9 @@ import Routes
 BEGINFLAG = "!BEGIN!"
 
 
-# Routes the command to the right function
 def commandRouter( lineJson ):
+	"""Routes the command to the right function. Throws `Warning` if
+	   command not matched."""
 
 	cmd = lineJson['command']
 	opt = lineJson['options']
@@ -75,22 +79,20 @@ def commandRouter( lineJson ):
 if __name__ == "__main__":
 
 	try:
-		# Get first argument (sys.argv[0] is path)
-		sys.argv[1]
+		# Get first argument (sys.argv[0] is path), throws IndexError
+		fn = sys.argv[1]
 
-	except IndexError:
-		raise Warning("No filename passed in")
-
-
-	try:
-		# Open document. Throws I/O Error
-		DOCUMENT = FreeCAD.openDocument ( sys.argv[1] )
+		# Open document. Throws I/O Error.
+		DOCUMENT = FreeCAD.openDocument ( fn )
 		# Flush FreeCAD's load info
 		sys.stdout.flush() 
 
 		# Flag to signal that no more bullshit (load info) will be printed on stdout
 		sys.stderr.write( BEGINFLAG )
 		sys.stderr.flush()
+
+	except IndexError:
+		raise Warning("No filename passed in")
 
 	except IOError:
 		raise Warning("Invalid or non-existing file %s" % sys.argv[1])
@@ -101,9 +103,6 @@ if __name__ == "__main__":
 		# sys.stdin.readline() happily blocks
 		# json.loads can throw an error
 		lineJson = json.loads( sys.stdin.readline() )
-		# IT HANGS HERE?????????
-		# Try to throw warning after line read...
-		raise Warning("HI")
 
 		if lineJson['type'] == 'command':
 			commandRouter( lineJson )

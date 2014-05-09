@@ -102,8 +102,8 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 
 			// Notify the callback that wants to know if we successfully started
 			if (startupCallBack) {
-				err = null;
-				startupCallBack( err );
+				
+				startupCallBack( null );
 				// Now it won't ever have to be called again
 				startupCallBack = null;
 			}

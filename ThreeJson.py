@@ -4,19 +4,6 @@
 #     three.js JSON object notation
 #     https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3
 #
-def tessToJson( vert, face, nvert, nface):
-    '''Specify compatible lists of vertices and faces,
-    and get a three.js JSON object back. Note: list of face indices
-    must be compatible, i.e. lead with 0 for each row of 3 indices
-    to create a triangle. Spec:
-    https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3'''
-    return JSON_TEMPLATE % {
-        'vertices' : str(vert),
-        'faces' : str(face),
-        'nVertices': nvert,
-        'nFaces' : nface,
-        'dummydata': "a"*1000
-    };
 
 JSON_TEMPLATE= """\
 {
@@ -58,8 +45,20 @@ JSON_TEMPLATE= """\
 
     "uvs": [[]],
 
-    "faces": %(faces)s,
-
-    "dummydata": "%(dummydata)s"
+    "faces": %(faces)s
 }
 """
+
+def tessToJson( vert, face, nvert, nface):
+    '''Specify compatible lists of vertices and faces,
+    and get a three.js JSON object back. Note: list of face indices
+    must be compatible, i.e. lead with 0 for each row of 3 indices
+    to create a triangle. Spec:
+    https://github.com/mrdoob/three.js/wiki/JSON-Model-format-3'''
+
+    return JSON_TEMPLATE % {
+        'vertices' : str(vert),
+        'faces' : str(face),
+        'nVertices': nvert,
+        'nFaces' : nface
+    };

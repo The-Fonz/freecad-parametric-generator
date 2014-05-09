@@ -1,0 +1,7 @@
+digraph G {
+0[label="Box"];
+1[label="Box001"];
+2[label="Cut"];
+2->0 ;
+2->1 ;
+}

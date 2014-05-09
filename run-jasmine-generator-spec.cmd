@@ -1,1 +1,0 @@
-jasmine-node --verbose --autotest spec/generatorSpec.js

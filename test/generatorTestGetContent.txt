@@ -1,0 +1,111 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+ FreeCAD Document, see http://free-cad.sourceforge.net for more information...
+-->
+<Document SchemaVersion="4">
+	<Properties Count="9">
+		<Property name="Comment" type="App::PropertyString">
+			<String value=""/>
+		</Property>
+		<Property name="Company" type="App::PropertyString">
+			<String value=""/>
+		</Property>
+		<Property name="CreatedBy" type="App::PropertyString">
+			<String value=""/>
+		</Property>
+		<Property name="CreationDate" type="App::PropertyString">
+			<String value="Sun Mar 23 19:54:49 2014 "/>
+		</Property>
+		<Property name="FileName" type="App::PropertyString">
+			<String value="C:/Users/Fons/GitHub/freecad-parametric-generator/test/example-parts/cubering.FCStd"/>
+		</Property>
+		<Property name="Id" type="App::PropertyString">
+			<String value="7223bb7d-caef-4514-bbbd-3b125e46527d"/>
+		</Property>
+		<Property name="Label" type="App::PropertyString">
+			<String value="cubering"/>
+		</Property>
+		<Property name="LastModifiedBy" type="App::PropertyString">
+			<String value=""/>
+		</Property>
+		<Property name="LastModifiedDate" type="App::PropertyString">
+			<String value="Sun Mar 23 23:29:43 2014 "/>
+		</Property>
+	</Properties>
+	<Objects Count="3">
+		<Object type="Part::Box" name="Box" />
+		<Object type="Part::Box" name="Box001" />
+		<Object type="Part::Cut" name="Cut" />
+	</Objects>
+	<ObjectData Count="3">
+		<Object name="Box">
+			<Properties Count="7">
+				<Property name="Height" type="App::PropertyLength">
+					<Float value="20"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Box"/>
+				</Property>
+				<Property name="Length" type="App::PropertyLength">
+					<Float value="10"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="0" Py="0" Pz="0" Q0="0" Q1="0" Q2="0" Q3="1"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+				</Property>
+				<Property name="Width" type="App::PropertyLength">
+					<Float value="10"/>
+				</Property>
+			</Properties>
+		</Object>
+		<Object name="Box001">
+			<Properties Count="7">
+				<Property name="Height" type="App::PropertyLength">
+					<Float value="12"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Box001"/>
+				</Property>
+				<Property name="Length" type="App::PropertyLength">
+					<Float value="5"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="2" Py="3" Pz="-1" Q0="0" Q1="0" Q2="0" Q3="1"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+				</Property>
+				<Property name="Width" type="App::PropertyLength">
+					<Float value="5"/>
+				</Property>
+			</Properties>
+		</Object>
+		<Object name="Cut">
+			<Properties Count="6">
+				<Property name="Base" type="App::PropertyLink">
+					<Link value="Box"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Cut"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="0" Py="0" Pz="0" Q0="0" Q1="0" Q2="0" Q3="1"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+				</Property>
+				<Property name="Tool" type="App::PropertyLink">
+					<Link value="Box001"/>
+				</Property>
+			</Properties>
+		</Object>
+	</ObjectData>
+</Document>

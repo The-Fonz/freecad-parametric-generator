@@ -5,14 +5,19 @@
 # Dependencies
 import utils
 import ThreeJson
+
+import sys
 import FreeCAD
 
 # Message to write on stderr that signals end of message
 ENDSTREAMFLAG = "!ENDSTREAM!"
 
+
 def output( data ):
+	'''Write `data` to stdout, flush, and write !ENDSTREAM! on stderr.'''
 	sys.stdout.write( data )
 	sys.stdout.flush()
+
 	sys.stderr.write( ENDSTREAMFLAG )
 	sys.stderr.flush()
 
@@ -34,7 +39,7 @@ def getTessellation( tolerance ):
 	for obj in FreeCAD.ActiveDocument.Objects: # For all objects in document
 		# Dirty solution; getActiveObjs reads a filename as zipfile and then extracts GuiDocument.xml...
 		visObjNames = utils.getActiveObjs( FreeCAD.ActiveDocument.FileName )
-		print visObjNames
+		
 		if obj.Name in visObjNames:
 			visibleObjs.append( obj )
 
@@ -93,8 +98,9 @@ def getTessellation( tolerance ):
 				faces.extend( [ TYPE, face[0],face[1],face[2] ] )
 			else:
 				raise Warning("This face is no triangle, it has length %s" % len(face) )
-	
+
 	data = ThreeJson.tessToJson( vertices, faces, nVertices, nFaces )
+	
 	output(data)
 
 
