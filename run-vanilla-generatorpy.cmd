@@ -1,1 +1,1 @@
-"C:/Program Files (x86)/FreeCAD0.13/bin/python.exe" "C:/Users/Fons/GitHub/freecad-parametric-generator/generator.py" "C:/Users/Fons/GitHub/freecad-parametric-generator/spec/example-parts/cubering.FCStd"
+"C:/Program Files (x86)/FreeCAD0.13/bin/python.exe" "C:/Users/Fons/GitHub/freecad-parametric-generator/generator.py" "C:/Users/Fons/GitHub/freecad-parametric-generator/test/example-parts/cubering.FCStd"

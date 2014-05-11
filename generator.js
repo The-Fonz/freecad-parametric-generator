@@ -13,6 +13,8 @@ var spawn = require('child_process').spawn;
 
 var NEWLINE = require('os').EOL;
 
+var utils = require('./utils');
+
 
 // Debug mode
 // ----------
@@ -21,14 +23,7 @@ var NEWLINE = require('os').EOL;
 var DEBUG = false;
 
 // If DEBUG, output to console, otherwise construct dummy object
-if (DEBUG) {
-	var debug = console;
-} else {
-	var debug = {
-		log: function(){},
-		error: function(){}
-	}
-}
+var debug = utils.returnConsole( DEBUG );
 
 
 // Class constructor
@@ -99,7 +94,8 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 
 			if (self.recipient) {
 
-				// Unpipe?
+				/* First check if stdout has been flushed,
+				to avoid premature ending! */
 
 				// End stream
 				self.recipient.end();

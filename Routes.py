@@ -133,6 +133,11 @@ def changeParam( objName, param, val ):
 			# The goal of this entire function
 			setattr( fcobj, param, val )
 
+		# Setattr throws TypeError when type of attribute does not match
+		# Let's try to set it as an int then (e.g. for array features)
+		except TypeError:
+			setattr( fcobj, param, int(val) )
+
 		except AttributeError: # Uh oh, the object doesn't have the attribute!
 			raise Warning("Object doesn't have the sought attribute")
 

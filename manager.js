@@ -8,8 +8,7 @@
 // =========
 
 // Maximum number of generators active at any one time
-var MAX_N_GENERATORS = 5;
-
+var MAX_N_GENERATORS = 2;
 
 // Requires
 // ========
@@ -20,6 +19,10 @@ var Generator = require('./generator').Generator;
 // Path module
 var path = require('path');
 
+// Include custom utilities
+var utils = require('./utils');
+
+
 
 // Paths
 // =====
@@ -29,11 +32,22 @@ var FCPYTHONPATH   = path.normalize( "C:/Program Files (x86)/FreeCAD0.13/bin/pyt
 
 //var PYGENPATH    = process.cwd() + "\\generator.py";
 // `path.resolve(to)` returns the absolute path to `to`.
-var PYGENPATH    = path.resolve( "/generator.py" );
+var PYGENPATH    = path.resolve( "./generator.py" );
 
 // Path to `.FCStd` models
 //var CADPATH = process.cwd() + "\\spec\\example-parts\\";
-var CADPATH = path.resolve( "/spec/example-parts/" );
+var CADPATH = path.resolve( "./test/example-parts/" );
+
+
+
+// Debug mode
+// ----------
+
+// Turn printing to console on or off
+var DEBUG = true;
+
+// If DEBUG, output to console, otherwise construct dummy object
+var debug = utils.returnConsole( DEBUG );
 
 
 // Constructor
@@ -84,7 +98,26 @@ Manager.prototype._killExcessGen = function ( n ) {
 		// Kill generator process
 		kg.kill();
 
-		console.log("Excess generator killed");
+		debug.log("Excess generator killed");
+	}
+}
+
+// ## Kill generator by timestamp
+Manager.prototype._destroyGenByTimestamp = function ( timestamp ) {
+
+	// While there's too many generators running...
+	for ( var i=0; i<this.genList.length; i++ ) {
+
+		if ( this.genList[i].timestamp === timestamp ) {
+
+			// Probably not necessary
+			this.genList[i].kill();
+
+			// Now remove from array
+			this.genList.remove(i);
+		}
+
+		debug.log("Generator with timestamp " + timestamp + "ms killed");
 	}
 }
 
@@ -98,7 +131,7 @@ Manager.prototype._instantiateGen = function ( filename ) {
 	var filePath = this._constructFilePath( filename );
 
 	// Instantiate new Generator object. It's initialized with .init
-	var gen = new Generator( PYTHONPATH, PYGENPATH );
+	var gen = new Generator( FCPYTHONPATH, PYGENPATH );
 
 	// Initialize generator
 	gen.init( filePath );
@@ -106,7 +139,8 @@ Manager.prototype._instantiateGen = function ( filename ) {
 	// Add queue for command blocks to object (only accessed by this file)
 	// Let's agree that new command blocks get pushed onto the queue, so that
 	// the first command is the oldest (and has highest priority).
-	gen.cmdQueue = [];
+	// The last command in a row is always a tessellation.
+	gen.cmdBlockQueue = [];
 
 	// Don't forget to save filename so we can identify it in the list
 	gen.filePath = filePath;
@@ -118,7 +152,7 @@ Manager.prototype._instantiateGen = function ( filename ) {
 	// Add to list
 	this.genList.push( gen );
 
-	console.log("New generator instantiated");
+	debug.log("New generator instantiated");
 
 	// Return generator object for immediate use
 	return gen;
@@ -143,27 +177,43 @@ Manager.prototype._findGenByFileName = function ( filename ) {
 }
 
 // ## Retrieves next command from queue and sends it
-Manager.prototype._sendNextCmd = function () {
+Manager.prototype._sendNextCmdBlock = function ( genObj ) {
 
-	console.log("Manager._sendNextCmd called");
+	debug.log("Manager._sendNextCmdBlock called");
 
 	// First get oldest queueObj in queue
-	var qo = genObj.cmdQueue.shift();
+	var qo = genObj.cmdBlockQueue.shift();
 
 	// If there is anything in queue...
 	if (qo) {
-		console.log("Sending new command block from queue");
+		debug.log("Sending new command block from queue");
 		// Send it
-		this._sendCmdBlock( qo.res, qo.cmdBlock );
+		this._sendCmdBlock( genObj, qo.res, qo.cmdBlock );
 	} else {
-		console.log("No commands in queue");
+		debug.log("No commands in queue");
 	}
 }
 
 // ## Sends command block to generator.js
-Manager.prototype._sendCmdBlock = function ( res, cmdBlock ) {
+Manager.prototype._sendCmdBlock = function ( genObj, res, cmdBlock ) {
 
-	// Do some parsing and call generator.js functions?
+	// First change parameters
+	for (var i=0; i<cmdBlock.length; i++) {
+
+		var b = cmdBlock[i];
+
+		if ( b.command === 'changeParam' ) {
+
+			genObj.changeParam( b.obj, b.param, b.value );
+
+		} else {
+			// Is this a good idea?
+			throw Error("Can't handle that type yet");
+		}
+	}
+
+	// Then request tessellation (pipes it through to res)
+	genObj.getTessellation( res, .1 );		
 
 }
 
@@ -171,7 +221,7 @@ Manager.prototype._sendCmdBlock = function ( res, cmdBlock ) {
 
 // ## This is the function that should principally be used from the outside.
 // It receives a command block and does all the necessary steps to manage it.
-Manager.prototype.cmdBlock = function ( req, res, filename, cmdBlock ) {
+Manager.prototype.cmdsAndTessellate = function ( req, res, filename, cmdBlock ) {
 
 
 	// ### Find generator
@@ -196,32 +246,32 @@ Manager.prototype.cmdBlock = function ( req, res, filename, cmdBlock ) {
 	// ### Put res and cmdBlock into one object to be able to put it into queue
 	var queueObj = {
 		res: res,
-		cmdBlock: cmdBlock,
 		// Use timestamp for easy identification later on
-		timestamp: timestamp
+		timestamp: timestamp,
+		cmdBlock: cmdBlock
 	};
 
 	// Put commands in waiting queue
-	genObj.cmdQueue.push( queueObj );
+	genObj.cmdBlockQueue.push( queueObj );
 
 	// Listen for 'close' on request (its only event). Delete corresponding command block
 	req.on( 'close', function (  ) {
 
-		console.log("Request emitted 'close'");
+		debug.log("Request emitted 'close'");
 
 		/* Delete command block. As the position of queueObj's constantly change,
 		   we need an identifier to identify the block. That's what we use the
 		   timestamp for. (Potentially other commands with same timestamp can be
 		   deleted accidentally, but the chance of equal timestamps is very small) */
-		for (var i=0; i<genObj.cmdQueue.length; i++) {
+		for (var i=0; i<genObj.cmdBlockQueue.length; i++) {
 
 			// Search for timestamp
-			if ( genObj.cmdQueue.timestamp === timestamp ) {
+			if ( genObj.cmdBlockQueue.timestamp === timestamp ) {
 
 				// Delete command block from queue
-				genObj.cmdQueue.remove( i );
+				genObj.cmdBlockQueue.remove( i );
 
-				console.log("Deleted command block with timestamp " + timestamp);
+				debug.log("Deleted command block with timestamp " + timestamp);
 			}
 		}
 	});
@@ -238,25 +288,54 @@ Manager.prototype.cmdBlock = function ( req, res, filename, cmdBlock ) {
 	res.on('finish', function () {
 
 		// All is fine, res.end() was called. Send next command
-		this._sendNextCmd();
+		this._sendNextCmdBlock( genObj );
 
 	// Bind anonymous function to be able to access Manager.this
 	}.bind(this) ).on('close', function () {
 
 		// The underlying connection was terminated before calling res.end()
 		// http://nodejs.org/api/http.html#http_event_close_1
-		console.error("Response emitted 'close': the underlying 
+		debug.error("Response emitted 'close': the underlying \
 			connection was terminated before calling res.end()");
 
-		this._sendNextCmd().bind(this);
+		this._sendNextCmdBlock( genObj );
 
 	// Bind anonymous function to be able to access Manager.this
+	}.bind(this) ).on('error', function(err) {
+
+		// This should never happen
+		throw Error("Problem! Error thrown on file Writable Stream, error:\n" + err );
+
+	// This custom event gets emitted when there's an error in generator.py
+	}.bind(this) ).on('generr', function(generr) {
+
+		debug.error("Generator.py error occurred"+generr);
+
+		// Notify the response of the error
+		if ( !res.headersSent ) {
+
+			res.writeHead( 500, "Generator.py threw an error" );
+
+		} else {
+			throw Error("Headers already sent while there's an error:\n" + generr );
+		}
+
+		// First remove this crashed generator
+		this._destroyGenByTimestamp( timestamp );
+
+		// Now restart the generator
+		genObj = this._instantiateGen( filename );
+
+		// And send the next command
+		this._sendNextCmdBlock( genObj );
+
 	}.bind(this) );
 
+	//console.log("LENGTH: "+genObj.cmdBlockQueue.length);
 
 	// ### If there are no commands in queue, send current command
-	if ( ! genObj.cmdQueue.length ) {
-		this._sendNextCmd();
+	if ( genObj.cmdBlockQueue.length <= 1 ) {
+		this._sendNextCmdBlock( genObj );
 	}
 
 }
