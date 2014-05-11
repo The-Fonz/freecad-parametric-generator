@@ -54,11 +54,23 @@ function makeDest ( testFilename, callBack ) {
 	}).on('finish', function() {
 
 		// Call callback with result
-		callBack ( rmWs( fs.readFileSync( testPath, 'utf8' ) ) );
+		if (callBack)
+			callBack ( null, rmWs( fs.readFileSync( testPath, 'utf8' ) ) );
 		
-	}).on('error', function() {
+	}).on('error', function(err) {
 
-		throw Error("Problem! Error thrown on file Writable Stream");
+		// This should never happen
+		throw Error("Problem! Error thrown on file Writable Stream, error:\n" + err );
+
+	// This custom event gets emitted when there's an error in generator.py
+	}).on('generr', function(generr) {
+
+		// Call callback with error
+		callBack( generr, null );
+
+		// Don't let callback be called again on 'finish'
+		callBack = null;
+
 	});
 
 	return dest;
@@ -73,9 +85,9 @@ var gen = new Generator( pythonPath, pyGenPath );
 describe("Generator", function() {
 
 	// ## Successful startup
-	describe("Startup", function() {
+	describe("Startup, should...", function() {
 
-		it("Should start without errors if given a valid filename", function( finished ) {
+		it("Start without errors if given a valid filename", function( finished ) {
 
 			// Initialize generator
 			gen.init( testFilePath, function (err) {
@@ -90,13 +102,15 @@ describe("Generator", function() {
 
 
 	// ## Functionality
-	describe("Functions", function() {
+	describe("Functions, should...", function() {
 
-		it("Should return the right FreeCAD.ActiveDocument.exportGraphviz()", function( finished ) {
+		it("Return the right FreeCAD.ActiveDocument.exportGraphviz()", function( finished ) {
 			
 			var testFilename = "generatorTestExportGraphviz.txt";
 
-			var dest = makeDest ( testFilename, function ( result ) {
+			var dest = makeDest ( testFilename, function ( err, result ) {
+
+				should.not.exist( err );
 
 				// Now test if result is indeed correct
 				result.should.equal(testdataGraphviz);
@@ -111,11 +125,13 @@ describe("Generator", function() {
 
 
 		// Test metadata extraction from the file against known contents
-		it("Should return the right FreeCAD.ActiveDocument.Content", function( finished ) {
+		it("Return the right FreeCAD.ActiveDocument.Content", function( finished ) {
 			
 			var testFilename = "generatorTestGetContent.txt";
 
-			var dest = makeDest ( testFilename, function ( result ) {
+			var dest = makeDest ( testFilename, function ( err, result ) {
+
+				should.not.exist( err );
 
 				// Now test if result is indeed correct
 				result.should.equal( testdataContent );
@@ -131,11 +147,13 @@ describe("Generator", function() {
 
 		// Test tessellation output against a known tessellation
 		// TODO: Change testdata and generator.py to reflect ALL OBJECTS IN DOCUMENT
-		it("Should return the correct tessellation", function( finished ) {
+		it("Return the correct tessellation", function( finished ) {
 			
 			var testFilename = "generatorTestGetTessellation.txt";
 
-			var dest = makeDest ( testFilename, function ( result ) {
+			var dest = makeDest ( testFilename, function ( err, result ) {
+
+				should.not.exist( err );
 
 				// Now test if result is indeed correct
 				result.should.equal( testdataTessellation );
@@ -149,53 +167,133 @@ describe("Generator", function() {
 
 
 		// Change a known parameter of a known object in the ActiveDocument
-		xit("Should be able to change 'Box' Height", function( finished ) {
+		it("Be able to change 'Box' Height", function( finished ) {
+			
 			// Read metadata, choose first parameter?
-			// Change parameter
+
+			// Make destination
+			var testFilename = "generatorTestChangeBoxHeight.txt";
+
+			var dest = makeDest ( testFilename, function ( err, result ) {
+
+				should.not.exist( err );
+
+				should.exist( result );
+
+				finished();
+			});
+
+			// Change parameter of object
 			gen.changeParam( 'Box', 'Height', 20 );
 
+			// Ask for tessellation
+			gen.getTessellation( dest, 1 );
 		});
 	});
 
 
-	// ## Export functionality
+	/* ## Export functionality
 	xdescribe("Export", function() {
 		// Test STL output against a known file
 		xit("Should output the correct STL file", function( finished ) {
 		});
-	});
+	});*/
 	
 
 	// ## Error throwing on wrong parameters
-	xdescribe("Function error throwing", function() {
-		it("Should throw an error on non-number tessellation parameter", function( finished ) {
-			/*var p = gen.init( testFilePath );
-			var p = gen.getTessellation( 'abc235' );
-			nodefn.bindCallback( p, function ( err, res ) {
-				expect(err).toBeTruthy();
-				// Extra test, not really necessary.
-				expect( rmWs(res) ).not.toEqual( rmWs(testdataTessellation) );
+	describe("Function error throwing, should throw an error...", function() {
+
+		/* Because these tests throw errors and thereby stop generator.py,
+		   we need to start them again for each test. */
+		beforeEach( function() {
+			gen.init( testFilePath );
+		});
+
+
+		it("On non-number tessellation parameter", function( finished ) {
+
+			var testFilename = "generatorTestGetTessellation.txt";
+
+			var dest = makeDest ( testFilename, function ( err, result ) {
+
+				should.exist( err );
+
+				should( result ).be.falsy;
+
 				finished();
-			});*/
+			});
+
+			gen.getTessellation( dest, 'abc235' );
+		});
+
+		it("When trying to change a non-existing object", function( finished ) {
+
+			// Make destination
+			var testFilename = "generatorTestChangeBoxHeightErrorNotExistingObject.txt";
+
+			var dest = makeDest ( testFilename, function ( err, result ) {
+
+				should.exist( err );
+
+				should(result).be.falsy;
+
+				//should.not.exist( result );
+
+				finished();
+			});
+
+			// Change parameter of non-existing object
+			gen.changeParam( 'SomeBogusObject1925738967', 'Height', 20 );
+
+			// Ask for tessellation
+			gen.getTessellation( dest, 1 );
+		});
+
+		it("When trying to change a non-existing parameter", function( finished ) {
+
+			// Make destination
+			var testFilename = "generatorTestChangeBoxHeightErrorNotExistingObject.txt";
+
+			var dest = makeDest ( testFilename, function ( err, result ) {
+
+				should.exist( err );
+
+				should(result).be.falsy;
+
+				//should.not.exist( result );
+
+				finished();
+			});
+
+			// Change non-existing parameter of existing object
+			gen.changeParam( 'Box', 'SomeBogusProperty12379123609732', 30 );
+
+			// Ask for tessellation
+			gen.getTessellation( dest, 1 );
 		});
 	});
 
 
 	// ## CLosing
 	describe("Close", function() {
+
+		// First start again...
+		gen.init( testFilePath );
+
 		it("Should close", function(  ) {
+
 			gen.kill().should.be.true;
 		});
 	});
 
 
 	// ## Error throwing when initialized with wrong filename
-	describe("Init error throwing", function() {
+	describe("Init error throwing, should return an error when...", function() {
 
 		// Instantiate new Generator object. It's initialized with .init
 		var gen = new Generator( pythonPath, pyGenPath );
 
-		it("Should give an error when passed no filename", function( finished ) {
+		it("Passed no filename", function( finished ) {
 			// Spawn process without a filename argument
 			gen.init( undefined, function ( err ) {
 
@@ -205,7 +303,7 @@ describe("Generator", function() {
 			});
 		});
 
-		it("Should give an error when passed an invalid filename", function( finished ) {
+		it("Passed an invalid filename", function( finished ) {
 
 			// Do it again, now with a bogus filename
 			gen.init( "somebogusfilename1935814597145908", function ( err ) {

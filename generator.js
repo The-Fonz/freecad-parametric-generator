@@ -6,9 +6,30 @@
  * as stdout is piped through without listening).
  */
 
+
+// Requires
+// --------
 var spawn = require('child_process').spawn;
 
 var NEWLINE = require('os').EOL;
+
+
+// Debug mode
+// ----------
+
+// Turn printing to console on or off
+var DEBUG = false;
+
+// If DEBUG, output to console, otherwise construct dummy object
+if (DEBUG) {
+	var debug = console;
+} else {
+	var debug = {
+		log: function(){},
+		error: function(){}
+	}
+}
+
 
 // Class constructor
 // -----------------
@@ -33,7 +54,7 @@ Generator.prototype._sendCmd = function( command, options ) {
 		options: typeof options !== 'undefined' ? options : null // No options needed for this command.
 	});
 
-	console.log("COMMAND SENT: " + msg);
+	debug.log("COMMAND SENT: " + msg);
 	
 	return self.gen.stdin.write( msg + NEWLINE );
 };
@@ -72,8 +93,8 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 	// stdout can be used just for piping.
 	self.gen.stderr.on('data', function (err) {
 
-		// If it contains "!ENDSTREAM!" it actually means that the data has ended,
-		// and we can close the receiving stream.
+		/* If it contains "!ENDSTREAM!" it actually means that the data has ended,
+		   and we can close the receiving stream. */
 		if ( err.match(/!ENDSTREAM!/g) ) {
 
 			if (self.recipient) {
@@ -88,15 +109,15 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 			} else {
 				// Weird! Recipient doesn't exist.
 				//throw Error("Recipient doesn't exist!");
-				console.error( "Recipient doesn't exist!" );
+				debug.error( "Recipient doesn't exist!" );
 			}
 
+		// Generator.py sends '!BEGIN!' on stderr when successfully initialized
 		} else if ( err.match( /!BEGIN!/g ) ) {
-			// Generator.py sends '!BEGIN!' on stderr when successfully initialized
 
 			// Now flush stdout to remove init data
 			var o = self.gen.stdout.read();
-			console.log("\n\n" +
+			debug.log("\n\n" +
 				"############################## Flushing stdout: ################################\n"
 				+ o );
 
@@ -120,13 +141,18 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 			// No, I want to implement the Writable Stream interface,
 			// no specific HTTP request stuff
 			if (self.recipient) {
+
+				// Let manager.js know that there was an error
+				self.recipient.emit('generr', Error("Generator.py raised an error:\n" + err) );
+
+				// If manager.js didn't do it already, end the recipient
 				self.recipient.end();
 			}
 
 			// Can't do this, or jasmine will stall
 			//throw Error("Python Error:\n" + err);
 			// Print instead
-			console.error("\n\n" +
+			debug.error("\n\n" +
 				"################################ Python Error:  ################################\n"
 				+ err);
 

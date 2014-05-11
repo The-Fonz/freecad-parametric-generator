@@ -56,13 +56,16 @@ def getTessellation( tolerance ):
 		if obj.isDerivedFrom("Part::Feature"): # Standard case
 		    shape = obj.Shape
 		    bMesh = False
+
 		elif obj.isDerivedFrom("Part::TopoShape"):
 		    shape = obj
 		    bMesh = False
+
 		elif obj.isDerivedFrom("Mesh::Feature"):
 			objVertices = obj.Mesh.Points
 			objFaces = obj.Mesh.Facets
 			bMesh = True
+			
 		else:
 			raise Warning("Object type not recognised.")
 
@@ -78,7 +81,9 @@ def getTessellation( tolerance ):
 
 		# Add vertices, assuming all vertices define triangles
 		for vec in objVertices:
+
 			nVertices += 1
+
 			# Accessing with .x, .y and .z also works for meshes
 			vertices.extend( [vec.x, vec.y, vec.z] )
 
@@ -86,8 +91,11 @@ def getTessellation( tolerance ):
 		# mesh face indices are not subscriptable but are accessed with .PointIndices
 		# We assume that all faces are triangles (but to be sure raise a warning otherwise).
 		for face in objFaces:
+
 			nFaces += 1
-			if len(face) == 3: # If triangle
+
+			# If triangle
+			if len(face) == 3:
 				TYPE = 0 # To indicate triangle (see three.js JSON object notation spec)
 
 				# `if` statement here to avoid ugly duplicate code in the form of two for loops!
@@ -109,19 +117,21 @@ def changeParam( objName, param, val ):
 
 	fcobj = FreeCAD.ActiveDocument.getObject( objName )
 
-	try: # Test if val is a number
+	# Test if val is a number
+	try:
 		val = float(val)
 
 	except ValueError:
-		# Is it wise to raise so many warnings?
 		raise Warning("Can't cast value to float")
 
 
-	if fcobj: # If object exist in current document
+	# If object exist in current document
+	if fcobj:
 
 		try:
-			# Builtin python function to set obj param per object name string
-			setattr( fcobj, param, val ) # The goal of this entire function
+			# Builtin python function to set obj param per object *namestring*
+			# The goal of this entire function
+			setattr( fcobj, param, val )
 
 		except AttributeError: # Uh oh, the object doesn't have the attribute!
 			raise Warning("Object doesn't have the sought attribute")
