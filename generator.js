@@ -19,10 +19,10 @@ var utils = require('./utils');
 // Debug mode
 // ----------
 
-// Turn printing to console on or off
+// Turn printing to debug on or off
 var DEBUG = false;
 
-// If DEBUG, output to console, otherwise construct dummy object
+// If DEBUG, output to debug, otherwise construct dummy object
 var debug = utils.returnConsole( DEBUG );
 
 
@@ -58,7 +58,7 @@ Generator.prototype._sendCmd = function( command, options ) {
 // ## Pipe generator.py output to recipient
 Generator.prototype._pipe = function ( destinationStream ) {
 	// Remember recipient
-	self.recipient = destinationStream;
+	this.recipient = destinationStream;
 
 	// Pipe stdout of generator.py to the destination Writable Stream
 	self.gen.stdout.pipe( destinationStream );
@@ -89,19 +89,52 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 	self.gen.stderr.on('data', function (err) {
 
 		/* If it contains "!ENDSTREAM!" it actually means that the data has ended,
-		   and we can close the receiving stream. */
+		   and we can close the receiving stream (upon checking if there's no data
+		   left to be flushed!) */
 		if ( err.match(/!ENDSTREAM!/g) ) {
 
 			if (self.recipient) {
 
-				/* First check if stdout has been flushed,
-				to avoid premature ending! */
+				/* Check if stdout has been flushed,
+				to avoid premature ending of destination stream!
+				I hacked into Node's `Stream` module, here's the relevant parts:
+				https://github.com/joyent/node/blob/master/lib/_stream_readable.js#L504 */
 
-				// End stream
-				self.recipient.end();
+				// If there's still data left to drain...
+				if ( this.gen.stdout._readableState.awaitDrain ) {
 
-				// Clear recipient
-				self.recipient = null;
+					debug.log("###  _readableState: " + this.gen.stdout._readableState.awaitDrain );
+
+					// listen for drain on recipient
+					this.recipient.on('drain', onDrain.bind(this) );
+
+				// If there's no data left to drain
+				} else {
+					// End stream
+					self.recipient.end();
+
+					// Clear recipient
+					self.recipient = null;
+				}
+
+				function onDrain() {
+					debug.log("###  _readableState: " + this.gen.stdout._readableState.awaitDrain );
+					// Check if it's been fully drained now
+					if ( 0 === this.gen.stdout._readableState.awaitDrain ) {
+
+						debug.log("FULLY DRAINED");
+
+						// End stream
+						self.recipient.end();
+
+						// Remove this listener
+						self.recipient.removeListener('drain', onDrain );
+
+						// Clear recipient
+						self.recipient = null;
+					}
+				}
+
 			} else {
 				// Weird! Recipient doesn't exist.
 				//throw Error("Recipient doesn't exist!");
@@ -153,7 +186,8 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 				+ err);
 
 		}
-	});
+	// Bind!
+	}.bind(this) );
 
 
 	/* ## We're not attaching to stdout here, as that's done by piping the response

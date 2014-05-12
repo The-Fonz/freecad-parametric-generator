@@ -44,7 +44,7 @@ var CADPATH = path.resolve( "./test/example-parts/" );
 // ----------
 
 // Turn printing to console on or off
-var DEBUG = true;
+var DEBUG = false;
 
 // If DEBUG, output to console, otherwise construct dummy object
 var debug = utils.returnConsole( DEBUG );

@@ -27,9 +27,9 @@ var testFilePath = process.cwd() + "\\test\\example-parts\\cubering.FCStd";
 
 
 // # Testdata
-var testdataGraphviz = rmWs( fs.readFileSync( "test/generatorTestExportGraphvizOriginal.txt", 'utf8' ) );
-var testdataContent = rmWs( fs.readFileSync( "test/generatorTestGetContentOriginal.txt", 'utf8' ) );
-var testdataTessellation = rmWs( fs.readFileSync( "test/generatorTestGetTessellationOriginal.txt", 'utf8' ) );
+var testdataGraphviz = rmWs( fs.readFileSync( "test/iofiles/generatorTestExportGraphvizOriginal.txt", 'utf8' ) );
+var testdataContent = rmWs( fs.readFileSync( "test/iofiles/generatorTestGetContentOriginal.txt", 'utf8' ) );
+var testdataTessellation = rmWs( fs.readFileSync( "test/iofiles/generatorTestGetTessellationOriginal.txt", 'utf8' ) );
 
 
 // Instantiate new Generator object. It's initialized with .init
@@ -61,7 +61,7 @@ describe("Generator", function() {
 
 		it("Return the right FreeCAD.ActiveDocument.exportGraphviz()", function( finished ) {
 			
-			var testFilename = "generatorTestExportGraphviz.txt";
+			var testFilename = "iofiles/generatorTestExportGraphviz.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -82,7 +82,7 @@ describe("Generator", function() {
 		// Test metadata extraction from the file against known contents
 		it("Return the right FreeCAD.ActiveDocument.Content", function( finished ) {
 			
-			var testFilename = "generatorTestGetContent.txt";
+			var testFilename = "iofiles/generatorTestGetContent.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -104,7 +104,7 @@ describe("Generator", function() {
 		// TODO: Change testdata and generator.py to reflect ALL OBJECTS IN DOCUMENT
 		it("Return the correct tessellation", function( finished ) {
 			
-			var testFilename = "generatorTestGetTessellation.txt";
+			var testFilename = "iofiles/generatorTestGetTessellation.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -127,7 +127,7 @@ describe("Generator", function() {
 			// Read metadata, choose first parameter?
 
 			// Make destination
-			var testFilename = "generatorTestChangeBoxHeight.txt";
+			var testFilename = "iofiles/generatorTestChangeBoxHeight.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -167,7 +167,7 @@ describe("Generator", function() {
 
 		it("On non-number tessellation parameter", function( finished ) {
 
-			var testFilename = "generatorTestGetTessellation.txt";
+			var testFilename = "iofiles/generatorTestGetTessellation.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -184,7 +184,7 @@ describe("Generator", function() {
 		it("When trying to change a non-existing object", function( finished ) {
 
 			// Make destination
-			var testFilename = "generatorTestChangeBoxHeightErrorNotExistingObject.txt";
+			var testFilename = "iofiles/generatorTestChangeBoxHeightErrorNotExistingObject.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -207,7 +207,7 @@ describe("Generator", function() {
 		it("When trying to change a non-existing parameter", function( finished ) {
 
 			// Make destination
-			var testFilename = "generatorTestChangeBoxHeightErrorNotExistingObject.txt";
+			var testFilename = "iofiles/generatorTestChangeBoxHeightErrorNotExistingParam.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 

@@ -81,7 +81,7 @@ var server = http.createServer( function( request, response ) {
 
 describe('Manager', function() {
 
-	it("Server connection should work", function(finished) {
+	it("Test-server connection should work", function(finished) {
 
 		// Make options
 		var options = {
@@ -116,7 +116,7 @@ describe('Manager', function() {
 			
 			should( res.statusCode ).equal( 200 );
 
-			var testfn = "managerTestTessellationOutput.txt";
+			var testfn = "./test/managerTestTessellationOutput.txt";
 
 			res.pipe( fs.createWriteStream( testfn, 'utf8' ) );
 
