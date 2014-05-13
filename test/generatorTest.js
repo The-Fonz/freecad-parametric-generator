@@ -61,7 +61,7 @@ describe("Generator", function() {
 
 		it("Return the right FreeCAD.ActiveDocument.exportGraphviz()", function( finished ) {
 			
-			var testFilename = "iofiles/generatorTestExportGraphviz.txt";
+			var testFilename = "generatorTestExportGraphviz.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -82,7 +82,7 @@ describe("Generator", function() {
 		// Test metadata extraction from the file against known contents
 		it("Return the right FreeCAD.ActiveDocument.Content", function( finished ) {
 			
-			var testFilename = "iofiles/generatorTestGetContent.txt";
+			var testFilename = "generatorTestGetContent.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -104,7 +104,7 @@ describe("Generator", function() {
 		// TODO: Change testdata and generator.py to reflect ALL OBJECTS IN DOCUMENT
 		it("Return the correct tessellation", function( finished ) {
 			
-			var testFilename = "iofiles/generatorTestGetTessellation.txt";
+			var testFilename = "generatorTestGetTessellation.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -127,7 +127,7 @@ describe("Generator", function() {
 			// Read metadata, choose first parameter?
 
 			// Make destination
-			var testFilename = "iofiles/generatorTestChangeBoxHeight.txt";
+			var testFilename = "generatorTestChangeBoxHeight.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -167,7 +167,7 @@ describe("Generator", function() {
 
 		it("On non-number tessellation parameter", function( finished ) {
 
-			var testFilename = "iofiles/generatorTestGetTessellation.txt";
+			var testFilename = "generatorTestNonNumberTessParam.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -184,7 +184,7 @@ describe("Generator", function() {
 		it("When trying to change a non-existing object", function( finished ) {
 
 			// Make destination
-			var testFilename = "iofiles/generatorTestChangeBoxHeightErrorNotExistingObject.txt";
+			var testFilename = "generatorTestChangeBoxHeightErrorNotExistingObject.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 
@@ -207,7 +207,7 @@ describe("Generator", function() {
 		it("When trying to change a non-existing parameter", function( finished ) {
 
 			// Make destination
-			var testFilename = "iofiles/generatorTestChangeBoxHeightErrorNotExistingParam.txt";
+			var testFilename = "generatorTestChangeBoxHeightErrorNotExistingParam.txt";
 
 			var dest = makeDest ( testFilename, function ( err, result ) {
 

@@ -309,7 +309,7 @@ Manager.prototype.cmdsAndTessellate = function ( req, res, filename, cmdBlock ) 
 	// This custom event gets emitted when there's an error in generator.py
 	}.bind(this) ).on('generr', function(generr) {
 
-		debug.error("Generator.py error occurred"+generr);
+		debug.error("Generator.py error occurred:\n"+generr);
 
 		// Notify the response of the error
 		if ( !res.headersSent ) {

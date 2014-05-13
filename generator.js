@@ -3,7 +3,7 @@
  * It doesn't do much more than send commands to `generator.py` and pipe the output
  * back to the recipient. Its smartest feature is how it detects end of transmission:
  * it listens for '!ENDSTREAM!' strings on stderr (a new way like this is needed
- * as stdout is piped through without listening).
+ * as stdio[3] is piped through without listening).
  */
 
 
@@ -60,32 +60,39 @@ Generator.prototype._pipe = function ( destinationStream ) {
 	// Remember recipient
 	this.recipient = destinationStream;
 
-	// Pipe stdout of generator.py to the destination Writable Stream
-	self.gen.stdout.pipe( destinationStream );
+	/* Prevent end() being called when stdio[3] closes, so we can still emit 'generr' on
+	   stdio[3] to signal an error */
+	var pipeOpts = { end: false };
+
+	// Pipe stdio[3] of generator.py to the destination Writable Stream
+	self.gen.stdio[3].pipe( this.recipient, pipeOpts );
 }
 
 
 // Initialization function
 // -----------------------
 
-// ## Loads cad file, spawns generator, attaches handlers to stderr and stdout
+// ## Loads cad file, spawns generator, attaches handlers to stderr and stdio[3]
 // The callback is notified on successful startup.
 Generator.prototype.init = function ( filePath, startupCallBack ) {
 
+	// Open fd3 as well
+	var spawnOpts = { stdio: [ 'pipe', 'pipe', 'pipe', 'pipe' ] }
+
 	// ### Instantiate generator process. [ pythonPath generator.py somecadfile.xx ]
-	self.gen = spawn( self.pythonPath, [ self.pyGenPath, filePath ] );
+	self.gen = spawn( self.pythonPath, [ self.pyGenPath, filePath ], spawnOpts );
 
 	// ### Set encodings to not have to cast using String() each time
 	var enc = 'utf8';
 	self.gen.stderr.setEncoding( enc );
-	self.gen.stdout.setEncoding( enc );
+	self.gen.stdio[3].setEncoding( enc );
 	self.gen.stdin.setEncoding( enc );
 
-	// ### Remember the current recipient of generator.py stdout
+	// ### Remember the current recipient of generator.py stdio[3]
 	self.recipient = null;
 
 	// ### Attach one global stderr listener. Stderr functions as message passing so
-	// stdout can be used just for piping.
+	// stdio[3] can be used just for piping.
 	self.gen.stderr.on('data', function (err) {
 
 		/* If it contains "!ENDSTREAM!" it actually means that the data has ended,
@@ -95,15 +102,15 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 
 			if (self.recipient) {
 
-				/* Check if stdout has been flushed,
+				/* Check if stdio[3] has been flushed,
 				to avoid premature ending of destination stream!
 				I hacked into Node's `Stream` module, here's the relevant parts:
 				https://github.com/joyent/node/blob/master/lib/_stream_readable.js#L504 */
 
 				// If there's still data left to drain...
-				if ( this.gen.stdout._readableState.awaitDrain ) {
+				if ( this.gen.stdio[3]._readableState.awaitDrain ) {
 
-					debug.log("###  _readableState: " + this.gen.stdout._readableState.awaitDrain );
+					debug.log("###  _readableState: " + this.gen.stdio[3]._readableState.awaitDrain );
 
 					// listen for drain on recipient
 					this.recipient.on('drain', onDrain.bind(this) );
@@ -111,6 +118,7 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 				// If there's no data left to drain
 				} else {
 					// End stream
+					debug.log("No drainage needed, ending recipient at once");
 					self.recipient.end();
 
 					// Clear recipient
@@ -118,9 +126,9 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 				}
 
 				function onDrain() {
-					debug.log("###  _readableState: " + this.gen.stdout._readableState.awaitDrain );
+					debug.log("###  _readableState: " + this.gen.stdio[3]._readableState.awaitDrain );
 					// Check if it's been fully drained now
-					if ( 0 === this.gen.stdout._readableState.awaitDrain ) {
+					if ( 0 === this.gen.stdio[3]._readableState.awaitDrain ) {
 
 						debug.log("FULLY DRAINED");
 
@@ -143,12 +151,6 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 
 		// Generator.py sends '!BEGIN!' on stderr when successfully initialized
 		} else if ( err.match( /!BEGIN!/g ) ) {
-
-			// Now flush stdout to remove init data
-			var o = self.gen.stdout.read();
-			debug.log("\n\n" +
-				"############################## Flushing stdout: ################################\n"
-				+ o );
 
 			// Notify the callback that wants to know if we successfully started
 			if (startupCallBack) {
@@ -178,9 +180,6 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 				self.recipient.end();
 			}
 
-			// Can't do this, or jasmine will stall
-			//throw Error("Python Error:\n" + err);
-			// Print instead
 			debug.error("\n\n" +
 				"################################ Python Error:  ################################\n"
 				+ err);
@@ -190,7 +189,7 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 	}.bind(this) );
 
 
-	/* ## We're not attaching to stdout here, as that's done by piping the response
+	/* ## We're not attaching to stdio[3] here, as that's done by piping the response
 	 *    object through when receiving a command
 	 */
 }
@@ -203,7 +202,7 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 Generator.prototype.getGraphviz = function ( dest ) {
 	self._sendCmd('getGraphviz');
 
-	// Pipe stdout
+	// Pipe stdio[3]
 	self._pipe( dest );
 }
 
@@ -211,7 +210,7 @@ Generator.prototype.getGraphviz = function ( dest ) {
 Generator.prototype.getContent = function ( dest ) {
 	self._sendCmd('getContent');
 
-	// Pipe stdout
+	// Pipe stdio[3]
 	self._pipe( dest );
 }
 
@@ -220,7 +219,7 @@ Generator.prototype.getContent = function ( dest ) {
 Generator.prototype.getTessellation = function ( dest, accuracy ) {
 	self._sendCmd('getTessellation', {accuracy: accuracy} );
 
-	// Pipe stdout
+	// Pipe stdio[3]
 	self._pipe(dest);
 }
 
@@ -233,7 +232,7 @@ Generator.prototype.changeParam = function( objName, param, val ) {
 		val: val
 	} );
 
-	// Don't pipe stdout, changeParam has no response
+	// Don't pipe stdio[3], changeParam has no response
 }
 
 // ## Kill process

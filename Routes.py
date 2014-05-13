@@ -9,27 +9,16 @@ import ThreeJson
 import sys
 import FreeCAD
 
-# Message to write on stderr that signals end of message
-ENDSTREAMFLAG = "!ENDSTREAM!"
-
-
-def output( data ):
-	'''Write `data` to stdout, flush, and write !ENDSTREAM! on stderr.'''
-	sys.stdout.write( data )
-	sys.stdout.flush()
-
-	sys.stderr.write( ENDSTREAMFLAG )
-	sys.stderr.flush()
 
 def getGraphviz():
 	'''Returns the graphviz in exported format (as opposed to .DependencyGraph).'''
 	data = FreeCAD.ActiveDocument.exportGraphviz()
-	output(data)
+	utils.output(data)
 
 def getContent():
 	'''Returns the right metadata.'''
 	data = FreeCAD.ActiveDocument.Content
-	output(data)
+	utils.output(data)
 
 def getTessellation( tolerance ):
 	'''Returns tessellation with specified tolerance.'''
@@ -109,7 +98,7 @@ def getTessellation( tolerance ):
 
 	data = ThreeJson.tessToJson( vertices, faces, nVertices, nFaces )
 	
-	output(data)
+	utils.output(data)
 
 
 def changeParam( objName, param, val ):

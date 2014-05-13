@@ -33,7 +33,7 @@ function rmWs (str) {
 // It simply returns the result to the callback function
 function makeDest ( testFilename, callBack ) {
 
-	var testPath = "./test/" + testFilename;
+	var testPath = "./test/iofiles/" + testFilename;
 
 	// Writable Stream
 	var dest = fs.createWriteStream( testPath, 'utf8' );

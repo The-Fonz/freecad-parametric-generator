@@ -1,3 +1,0 @@
-FreeCAD 0.13, Libs: 0.13R1828
-Importing project files......
-						(33.0 %)							(66.0 %)							(100.0 %)									

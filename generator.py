@@ -23,6 +23,8 @@
 
 # Imports
 # =======
+import utils
+
 import sys
 
 # For JSON parsing. Use `json.load( fileobj )`, not `.loads( str )`
@@ -33,7 +35,7 @@ import time
 # Prints init info to sys.stdout, can flush to return the data
 import FreeCAD
 # Flush FreeCAD's init info
-sys.stdout.flush()
+#sys.stdout.flush()
 
 
 # Custom module import
@@ -84,8 +86,6 @@ if __name__ == "__main__":
 
 		# Open document. Throws I/O Error.
 		DOCUMENT = FreeCAD.openDocument ( fn )
-		# Flush FreeCAD's load info
-		sys.stdout.flush() 
 
 		# Flag to signal that no more bullshit (load info) will be printed on stdout
 		sys.stderr.write( BEGINFLAG )

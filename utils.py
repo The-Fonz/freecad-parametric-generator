@@ -5,6 +5,25 @@
 import zipfile
 import xml.etree.ElementTree as ET
 
+import os
+import sys
+
+# Message to write on stderr that signals end of message
+ENDSTREAMFLAG = "!ENDSTREAM!"
+
+# Open file descriptor 3 (next to stdin/out/err)
+# It's VERY important to set 'bufsize' to 0 (unbuffered), otherwise the system default
+# is used and the output is cut off. Unbuffered seems to work perfectly.
+fd3 = os.fdopen( 3, 'w', 0 )
+
+def output( data ):
+    '''Write `data` to stdout, flush, and write !ENDSTREAM! on stderr.'''    
+    fd3.write( data )
+    fd3.flush()
+
+    sys.stderr.write( ENDSTREAMFLAG )
+    sys.stderr.flush()
+
 def getActiveObjs( filename ):
     '''Pass a FreeCAD file to this function and 
     receive back a list of the visible objects.

@@ -3,7 +3,8 @@
  */
 
 // Define constants
-var testFile = "cubering.FCStd";
+var testFile = "torus.FCStd";
+//var testFile = "cubering.FCStd";
 
 // Manager object
 var Manager = require('../manager').Manager;
@@ -21,6 +22,9 @@ var should = require('should');
 
 // Using filesystem as Writable Stream
 var fs = require('fs');
+
+// Importing custom utilities
+var utils = require('../utils');
 
 
 // Make server
@@ -57,8 +61,6 @@ var server = http.createServer( function( request, response ) {
 
 		var cmdBlock = hashArr;
 
-		var filename = "torus.FCStd";
-
 		//console.log( cmdBlock );
 
 		// TESTING
@@ -66,7 +68,7 @@ var server = http.createServer( function( request, response ) {
 		//response.end("HITHERE");
 
 		// Now call `manager.js`
-		manager.cmdsAndTessellate( request, response, filename, cmdBlock );
+		manager.cmdsAndTessellate( request, response, testFile, cmdBlock );
 
 	} else {
 		// No hash!
@@ -101,8 +103,12 @@ describe('Manager', function() {
 
 	it("Should return correct tessellation", function(finished) {
 
+		// Increase timeout
+		this.timeout(5000);
+
 		// Make a hash
 		var hash = '#Array:NumberPolar=14';
+		//var hash = '#Box001:Width=7';
 
 		// Make options
 		var options = {
@@ -113,14 +119,23 @@ describe('Manager', function() {
 
 		// Send request
 		http.get( options, function( res ) {
-			
+
 			should( res.statusCode ).equal( 200 );
 
-			var testfn = "./test/managerTestTessellationOutput.txt";
+			// Load reference file
+			var original = utils.rmWs( fs.readFileSync( "./test/iofiles/managerTestTessellationOutputOriginal.txt", 'utf8' ) );
 
-			res.pipe( fs.createWriteStream( testfn, 'utf8' ) );
+			// res is a Readable Stream. Pipe it to a file
+			var writeStream = fs.createWriteStream( "./test/iofiles/managerTestTessellationOutput.txt", 'utf8');
+			res.pipe( writeStream );
 
-			finished();
+			writeStream.on('finish', function() {
+				var result = utils.rmWs( fs.readFileSync( "./test/iofiles/managerTestTessellationOutput.txt", 'utf8' ) );
+
+				result.should.equal( original );
+
+				finished();
+			});
 		});
 	});
 
