@@ -38,6 +38,8 @@ def getTessellation( tolerance ):
 	faces = []; nFaces = 0;
 
 	for obj in visibleObjs:
+		# startVertex, because every object begins at 0 again
+		sV = nVertices;
 		# The below inspired by: https://github.com/dcowden/cadquery/blob/master/cadquery/freecad_impl/exporters.py
 		# (originall adapted from that code but made functional instead of OO
 		# to avoid method call overhead as there are MANY vertices)
@@ -94,7 +96,7 @@ def getTessellation( tolerance ):
 				if bMesh:
 					face = face.PointIndices # face.PointIndices is a tuple
 				# Are int() casts necessary here? I left them out.
-				faces.extend( [ TYPE, face[0],face[1],face[2] ] )
+				faces.extend( [ TYPE, face[0]+sV,face[1]+sV,face[2]+sV ] )
 			else:
 				raise Warning("This face is no triangle, it has length %s" % len(face) )
 
