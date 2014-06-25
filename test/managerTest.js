@@ -34,32 +34,7 @@ var server = http.createServer( function( request, response ) {
 
 	if (hash) {
 
-		// Remove leading hash sign from hash
-		hash = hash.replace('#', '');
-
-		// Split at '&' sign
-		var hashArr = hash.split('&');
-
-
-		for (var i=0; i<hashArr.length; i++) {
-
-			// Split at '=' (object:parameter=value)
-			var objParam = hashArr[i].split('=')[0];
-			var value    = hashArr[i].split('=')[1];
-
-			// Split at ':' (object:parameter)
-			var obj = objParam.split(':')[0];
-			var param = objParam.split(':')[1];
-
-			hashArr[i] = {
-				command: 'changeParam',
-				obj: obj,
-				param: param,
-				value: value
-			}
-		}
-
-		var cmdBlock = hashArr;
+		var cmdBlock = utils.parseHash( hash );
 
 		//console.log( cmdBlock );
 

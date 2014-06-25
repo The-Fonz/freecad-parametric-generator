@@ -22,6 +22,8 @@ def getContent():
 
 def getTessellation( tolerance ):
 	'''Returns tessellation with specified tolerance.'''
+	# First recompute, otherwise changes won't be visible!
+	FreeCAD.ActiveDocument.recompute()
 	# Don't fuse all objects before tessellating, just tessellate all visible objects
 	visibleObjs = []
 	#raise Warning("FreeCADGui dir:\n", dir(FreeCADGui))

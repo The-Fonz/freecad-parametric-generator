@@ -20,7 +20,7 @@ var utils = require('./utils');
 // ----------
 
 // Turn printing to debug on or off
-var DEBUG = false;
+var DEBUG = true;
 
 // If DEBUG, output to debug, otherwise construct dummy object
 var debug = utils.returnConsole( DEBUG );
@@ -176,8 +176,11 @@ Generator.prototype.init = function ( filePath, startupCallBack ) {
 				// Let manager.js know that there was an error
 				self.recipient.emit('generr', Error("Generator.py raised an error:\n" + err) );
 
-				// If manager.js didn't do it already, end the recipient
-				self.recipient.end();
+				// Check for existence to avoid error
+				if (self.recipient) {
+					// If manager.js didn't do it already, end the recipient
+					self.recipient.end();
+				}
 			}
 
 			debug.error("\n\n" +

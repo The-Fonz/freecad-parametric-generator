@@ -32,11 +32,12 @@ var FCPYTHONPATH   = path.normalize( "C:/Program Files (x86)/FreeCAD0.13/bin/pyt
 
 //var PYGENPATH    = process.cwd() + "\\generator.py";
 // `path.resolve(to)` returns the absolute path to `to`.
-var PYGENPATH    = path.resolve( "./generator.py" );
+// Go one folder up
+var PYGENPATH    = path.resolve( "../freecad-parametric-generator/generator.py" );
 
 // Path to `.FCStd` models
 //var CADPATH = process.cwd() + "\\spec\\example-parts\\";
-var CADPATH = path.resolve( "./test/example-parts/" );
+var CADPATH = path.resolve( "../freecad-parametric-generator/test/example-parts/" );
 
 
 
@@ -44,7 +45,7 @@ var CADPATH = path.resolve( "./test/example-parts/" );
 // ----------
 
 // Turn printing to console on or off
-var DEBUG = false;
+var DEBUG = true;
 
 // If DEBUG, output to console, otherwise construct dummy object
 var debug = utils.returnConsole( DEBUG );

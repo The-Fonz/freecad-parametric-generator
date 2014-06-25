@@ -67,6 +67,44 @@ function makeDest ( testFilename, callBack ) {
 	return dest;
 }
 
+// Parse hash, return command block
+// '#Object:Parameter=5.5&Etc:abc=2'
+function parseHash ( hash ) {
+	
+	// Remove leading hash sign from hash
+	hash = hash.replace('#', '');
+
+	// Remove last '&' (to prevent an empty array entry on split)
+	if (hash[hash.length-1] === '&')
+		hash = hash.slice(0,-1);
+
+	// Split at '&' sign
+	var hashArr = hash.split('&');
+
+	var cmdBlocks = [];
+
+	// Parse every `Object:Parameter=val` part
+	for (var i=0; i<hashArr.length; i++) {
+
+		// Split at '=' (object:parameter=value)
+		var arr = hashArr[i].match( /^(.+?):(.+?)=(.+?)$/ );
+
+		// First entry is total match, then the capture groups start
+		var obj = arr[1];
+		var param = arr[2];
+		var value = arr[3];
+
+		cmdBlocks[i] = {
+			command: 'changeParam',
+			obj: obj,
+			param: param,
+			value: value
+		}
+	}
+
+	return cmdBlocks;
+}
+
 
 
 // Set exports
@@ -77,3 +115,5 @@ module.exports.rmWs = rmWs;
 module.exports.returnConsole = returnConsole;
 
 module.exports.makeDest = makeDest;
+
+module.exports.parseHash = parseHash;

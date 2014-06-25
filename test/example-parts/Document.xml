@@ -1,0 +1,258 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+ FreeCAD Document, see http://free-cad.sourceforge.net for more information...
+-->
+<Document SchemaVersion="4">
+	<Properties Count="9">
+		<Property name="Comment" type="App::PropertyString">
+			<String value=""/>
+		</Property>
+		<Property name="Company" type="App::PropertyString">
+			<String value=""/>
+		</Property>
+		<Property name="CreatedBy" type="App::PropertyString">
+			<String value=""/>
+		</Property>
+		<Property name="CreationDate" type="App::PropertyString">
+			<String value="Tue Apr 22 10:28:48 2014 "/>
+		</Property>
+		<Property name="FileName" type="App::PropertyString">
+			<String value="C:/Users/Fons/GitHub/freecad-parametric-generator/spec/example-parts/torus.FCStd"/>
+		</Property>
+		<Property name="Id" type="App::PropertyString">
+			<String value="37ae51ad-31f8-40d8-bb01-769f933cb2d9"/>
+		</Property>
+		<Property name="Label" type="App::PropertyString">
+			<String value="torus"/>
+		</Property>
+		<Property name="LastModifiedBy" type="App::PropertyString">
+			<String value=""/>
+		</Property>
+		<Property name="LastModifiedDate" type="App::PropertyString">
+			<String value="Tue Apr 22 10:40:25 2014 "/>
+		</Property>
+	</Properties>
+	<Objects Count="7">
+		<Object type="Part::Torus" name="Torus" />
+		<Object type="Part::Cone" name="Cone" />
+		<Object type="Part::Cylinder" name="Cylinder" />
+		<Object type="Part::Cylinder" name="Cylinder001" />
+		<Object type="Part::FeaturePython" name="Array" />
+		<Object type="Part::Cut" name="Cut" />
+		<Object type="Part::Cut" name="Cut001" />
+	</Objects>
+	<ObjectData Count="7">
+		<Object name="Torus">
+			<Properties Count="9">
+				<Property name="Angle1" type="App::PropertyFloatConstraint">
+					<Float value="-180.000000000000"/>
+				</Property>
+				<Property name="Angle2" type="App::PropertyFloatConstraint">
+					<Float value="180.000000000000"/>
+				</Property>
+				<Property name="Angle3" type="App::PropertyFloatConstraint">
+					<Float value="360.000000000000"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Torus"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="0.000000000000" Py="0.000000000000" Pz="0.000000000000" Q0="0.000000000000" Q1="0.000000000000" Q2="0.000000000000" Q3="1.000000000000"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Radius1" type="App::PropertyFloatConstraint">
+					<Float value="10.000000000000"/>
+				</Property>
+				<Property name="Radius2" type="App::PropertyFloatConstraint">
+					<Float value="2.000000000000"/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+					<Part file="PartShape.brp"/>
+				</Property>
+			</Properties>
+		</Object>
+		<Object name="Cone">
+			<Properties Count="8">
+				<Property name="Angle" type="App::PropertyFloatConstraint">
+					<Float value="360.000000000000"/>
+				</Property>
+				<Property name="Height" type="App::PropertyLength">
+					<Float value="10.000000000000"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Cone"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="0.000000000000" Py="0.000000000000" Pz="0.000000000000" Q0="0.000000000000" Q1="0.000000000000" Q2="0.000000000000" Q3="1.000000000000"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Radius1" type="App::PropertyLength">
+					<Float value="2.000000000000"/>
+				</Property>
+				<Property name="Radius2" type="App::PropertyLength">
+					<Float value="4.000000000000"/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+					<Part file="PartShape1.brp"/>
+				</Property>
+			</Properties>
+		</Object>
+		<Object name="Cylinder">
+			<Properties Count="7">
+				<Property name="Angle" type="App::PropertyFloatConstraint">
+					<Float value="360.000000000000"/>
+				</Property>
+				<Property name="Height" type="App::PropertyLength">
+					<Float value="10.000000000000"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Cylinder"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="0.000000000000" Py="0.000000000000" Pz="0.000000000000" Q0="0.000000000000" Q1="0.000000000000" Q2="0.000000000000" Q3="1.000000000000"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Radius" type="App::PropertyLength">
+					<Float value="2.000000000000"/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+					<Part file="PartShape2.brp"/>
+				</Property>
+			</Properties>
+		</Object>
+		<Object name="Cylinder001">
+			<Properties Count="7">
+				<Property name="Angle" type="App::PropertyFloatConstraint">
+					<Float value="360.000000000000"/>
+				</Property>
+				<Property name="Height" type="App::PropertyLength">
+					<Float value="10.000000000000"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Cylinder001"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="10.000000000000" Py="0.000000000000" Pz="-5.000000000000" Q0="0.000000000000" Q1="0.000000000000" Q2="0.000000000000" Q3="1.000000000000"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Radius" type="App::PropertyLength">
+					<Float value="1.000000000000"/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+					<Part file="PartShape3.brp"/>
+				</Property>
+			</Properties>
+		</Object>
+		<Object name="Array">
+			<Properties Count="17">
+				<Property name="Angle" type="App::PropertyAngle" group="Base" doc="Angle to cover with copies" attr="0" ro="0" hide="0">
+					<Float value="360.000000000000"/>
+				</Property>
+				<Property name="ArrayType" type="App::PropertyEnumeration" group="Base" doc="The type of array to create" attr="0" ro="0" hide="0">
+					<Integer value="1" CustomEnum="true"/>
+					<CustomEnumList count="2">
+						<Enum value="ortho"/>
+						<Enum value="polar"/>
+					</CustomEnumList>
+				</Property>
+				<Property name="Axis" type="App::PropertyVector" group="Base" doc="The axis direction" attr="0" ro="0" hide="0">
+					<PropertyVector valueX="0.000000000000" valueY="0.000000000000" valueZ="1.000000000000"/>
+				</Property>
+				<Property name="Base" type="App::PropertyLink" group="Base" doc="The base object that must be duplicated" attr="0" ro="0" hide="0">
+					<Link value="Cylinder001"/>
+				</Property>
+				<Property name="Center" type="App::PropertyVector" group="Base" doc="Center point" attr="0" ro="0" hide="0">
+					<PropertyVector valueX="0.000000000000" valueY="0.000000000000" valueZ="0.000000000000"/>
+				</Property>
+				<Property name="IntervalX" type="App::PropertyVector" group="Base" doc="Distance and orientation of intervals in X direction" attr="0" ro="0" hide="0">
+					<PropertyVector valueX="1.000000000000" valueY="0.000000000000" valueZ="0.000000000000"/>
+				</Property>
+				<Property name="IntervalY" type="App::PropertyVector" group="Base" doc="Distance and orientation of intervals in Y direction" attr="0" ro="0" hide="0">
+					<PropertyVector valueX="0.000000000000" valueY="1.000000000000" valueZ="0.000000000000"/>
+				</Property>
+				<Property name="IntervalZ" type="App::PropertyVector" group="Base" doc="Distance and orientation of intervals in Z direction" attr="0" ro="0" hide="0">
+					<PropertyVector valueX="0.000000000000" valueY="0.000000000000" valueZ="1.000000000000"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Array"/>
+				</Property>
+				<Property name="NumberPolar" type="App::PropertyInteger" group="Base" doc="Number of copies" attr="0" ro="0" hide="0">
+					<Integer value="10"/>
+				</Property>
+				<Property name="NumberX" type="App::PropertyInteger" group="Base" doc="Number of copies in X direction" attr="0" ro="0" hide="0">
+					<Integer value="2"/>
+				</Property>
+				<Property name="NumberY" type="App::PropertyInteger" group="Base" doc="Number of copies in Y direction" attr="0" ro="0" hide="0">
+					<Integer value="2"/>
+				</Property>
+				<Property name="NumberZ" type="App::PropertyInteger" group="Base" doc="Number of copies in Z direction" attr="0" ro="0" hide="0">
+					<Integer value="1"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="0.000000000000" Py="0.000000000000" Pz="0.000000000000" Q0="0.000000000000" Q1="0.000000000000" Q2="0.000000000000" Q3="1.000000000000"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Proxy" type="App::PropertyPythonObject">
+					<Python value="IkFycmF5Ig==" encoded="yes" module="Draft" class="_Array"/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+					<Part file="PartShape4.brp"/>
+				</Property>
+			</Properties>
+		</Object>
+		<Object name="Cut">
+			<Properties Count="6">
+				<Property name="Base" type="App::PropertyLink">
+					<Link value="Cone"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Cut"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="0.000000000000" Py="0.000000000000" Pz="0.000000000000" Q0="0.000000000000" Q1="0.000000000000" Q2="0.000000000000" Q3="1.000000000000"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+					<Part file="PartShape5.brp"/>
+				</Property>
+				<Property name="Tool" type="App::PropertyLink">
+					<Link value="Cylinder"/>
+				</Property>
+			</Properties>
+		</Object>
+		<Object name="Cut001">
+			<Properties Count="6">
+				<Property name="Base" type="App::PropertyLink">
+					<Link value="Torus"/>
+				</Property>
+				<Property name="Label" type="App::PropertyString">
+					<String value="Cut001"/>
+				</Property>
+				<Property name="Placement" type="App::PropertyPlacement">
+					<PropertyPlacement Px="0.000000000000" Py="0.000000000000" Pz="0.000000000000" Q0="0.000000000000" Q1="0.000000000000" Q2="0.000000000000" Q3="1.000000000000"/>
+				</Property>
+				<Property name="Pos" type="App::PropertyPlacementLink">
+					<Link value=""/>
+				</Property>
+				<Property name="Shape" type="Part::PropertyPartShape">
+					<Part file="PartShape6.brp"/>
+				</Property>
+				<Property name="Tool" type="App::PropertyLink">
+					<Link value="Array"/>
+				</Property>
+			</Properties>
+		</Object>
+	</ObjectData>
+</Document>
