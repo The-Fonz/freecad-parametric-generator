@@ -22,6 +22,9 @@ bower_components
 *.sublime-project
 *.sublime-workspace
 
+### Custom: ignore test i/o files
+test\iofiles\*
+
 
 #################
 ## Eclipse
