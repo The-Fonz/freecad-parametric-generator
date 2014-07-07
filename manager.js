@@ -23,22 +23,11 @@ var path = require('path');
 var utils = require('./utils');
 
 
-
 // Paths
 // =====
 
-// Full path to FreeCAD python
-var FCPYTHONPATH   = path.normalize( "C:/Program Files (x86)/FreeCAD0.13/bin/python.exe" );
-
-//var PYGENPATH    = process.cwd() + "\\generator.py";
-// `path.resolve(to)` returns the absolute path to `to`.
-// Go one folder up
-var PYGENPATH    = path.resolve( "../freecad-parametric-generator/generator.py" );
-
-// Path to `.FCStd` models
-//var CADPATH = process.cwd() + "\\spec\\example-parts\\";
-var CADPATH = path.resolve( "../freecad-parametric-generator/test/example-parts/" );
-
+// Resolves to generator.py that's adjacent to this file
+var PYGENPATH    = path.resolve( __dirname, "generator.py" );
 
 
 // Debug mode
@@ -53,9 +42,10 @@ var debug = utils.returnConsole( DEBUG );
 
 // Constructor
 // ===========
-function Manager () {
-
-	// TODO: Take pythonpath, pygenpath, and cadPath as parameters
+function Manager ( pythonCmd, fileFolder ) {
+	/* pythonCmd is the command to be executed to run python, either just 'python'
+	   or a complete path. */
+	this.pythonCmd = pythonCmd;
 
 	// Make new list of generator.js instances.
 	// Let's agree that this is a stack, appending the newest last
@@ -81,9 +71,9 @@ Manager.prototype._timestamp = function () {
 }
 
 // ## Generate file path from filename
-Manager.prototype._constructFilePath = function ( filename ) {
+Manager.prototype._constructFilePath = function ( filepath ) {
 	// Using the robust path module methods for this
-	return path.join( CADPATH, filename );
+	return path.normalize( filepath );
 }
 
 
@@ -102,6 +92,7 @@ Manager.prototype._killExcessGen = function ( n ) {
 		debug.log("Excess generator killed");
 	}
 }
+
 
 // ## Kill generator by timestamp
 Manager.prototype._destroyGenByTimestamp = function ( timestamp ) {
@@ -123,7 +114,7 @@ Manager.prototype._destroyGenByTimestamp = function ( timestamp ) {
 }
 
 
-// CLass methods
+// Class methods
 // =============
 
 // Create new instance of generator.js
@@ -132,22 +123,21 @@ Manager.prototype._instantiateGen = function ( filename ) {
 	var filePath = this._constructFilePath( filename );
 
 	// Instantiate new Generator object. It's initialized with .init
-	var gen = new Generator( FCPYTHONPATH, PYGENPATH );
+	var gen = new Generator( this.pythonCmd, PYGENPATH );
 
 	// Initialize generator
 	gen.init( filePath );
 
-	// Add queue for command blocks to object (only accessed by this file)
-	// Let's agree that new command blocks get pushed onto the queue, so that
-	// the first command is the oldest (and has highest priority).
-	// The last command in a row is always a tessellation.
+	/* Add queue for command blocks to object (only accessed by this file)
+	   Let's agree that new command blocks get pushed onto the queue, so that
+	   the first command is the oldest (and has highest priority).
+	   The last command in a row is always a tessellation. */
 	gen.cmdBlockQueue = [];
 
 	// Don't forget to save filename so we can identify it in the list
 	gen.filePath = filePath;
 
 	// And give it a timestamp
-	// Note: this is not used for now. And there's better ways of setting timeouts.
 	gen.timestamp = this._timestamp();
 
 	// Add to list
@@ -282,7 +272,6 @@ Manager.prototype.cmdsAndTessellate = function ( req, res, filename, cmdBlock ) 
 	   timeout on requests?) */
 
 
-
 	// ### Connect to all possible events on the response object to handle sending next command later on
 
 	// Listen for 'close' and 'finish' (and 'unpipe'? and 'error'?) on response object. Then send next block
@@ -305,38 +294,36 @@ Manager.prototype.cmdsAndTessellate = function ( req, res, filename, cmdBlock ) 
 	}.bind(this) ).on('error', function(err) {
 
 		// This should never happen
-		throw Error("Problem! Error thrown on file Writable Stream, error:\n" + err );
+		debug.error( "Problem! Error thrown on file Writable Stream, error:\n" + err );
 
 	// This custom event gets emitted when there's an error in generator.py
 	}.bind(this) ).on('generr', function(generr) {
 
 		debug.error("Generator.py error occurred:\n"+generr);
 
-		// Notify the response of the error
+		// Notify the response of the error if headers not yet sent
 		if ( !res.headersSent ) {
-
-			res.writeHead( 500, "Generator.py threw an error" );
-
+			res.status(500).end("Generator.py threw an error");
 		} else {
-			throw Error("Headers already sent while there's an error:\n" + generr );
+			debug.error( "Headers already sent while there's an error:\n" + generr );
+			// HTTP status headers cannot be set if they're already sent (trying to will throw an error).
+			res.end("AN ERROR OCCURRED (Generator.py threw an error)");
 		}
 
 		// First remove this crashed generator
 		this._destroyGenByTimestamp( timestamp );
-
 		// Now restart the generator
 		genObj = this._instantiateGen( filename );
-
 		// And send the next command
 		this._sendNextCmdBlock( genObj );
 
 	}.bind(this) );
 
-	//console.log("LENGTH: "+genObj.cmdBlockQueue.length);
-
-	// ### If there are no commands in queue, send current command
+	// ### If there are no commands in queue, send current command immediately
 	if ( genObj.cmdBlockQueue.length <= 1 ) {
 		this._sendNextCmdBlock( genObj );
+	} else {
+		debug.log("Command not yet sent, queue length: "+genObj.cmdBlockQueue.length);
 	}
 
 }
