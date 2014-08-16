@@ -14,7 +14,8 @@ ENDSTREAMFLAG = "!ENDSTREAM!"
 # Open file descriptor 3 (next to stdin/out/err)
 # It's VERY important to set 'bufsize' to 0 (unbuffered), otherwise the system default
 # is used and the output is cut off. Unbuffered seems to work perfectly.
-fd3 = os.fdopen( 3, 'w', 0 )
+BUFSIZE = 10E6 # bytes
+fd3 = os.fdopen( 3, 'w', BUFSIZE )
 
 def output( data ):
     '''Write `data` to stdout, flush, and write !ENDSTREAM! on stderr.'''    
